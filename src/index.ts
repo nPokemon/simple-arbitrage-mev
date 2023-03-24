@@ -8,6 +8,7 @@ import { get } from "https"
 import { getDefaultRelaySigningKey } from "./utils";
 // import * as stablecoinAddressesData from './data/stablecoins.json';
 import stablecoinAddressesData from './data/stablecoins.json';
+const { helloworld } = require('./helloworld.js');
 
 // const ETHEREUM_RPC_URL = process.env.ETHEREUM_RPC_URL || "http://127.0.0.1:8545"
 // const ETHEREUM_RPC_URL = process.env.ETHEREUM_RPC_URL || "https://eth-goerli.g.alchemy.com/v2/2I4tGEHZgeRbdF0TyOKx-c9H_824BAJk"
@@ -88,6 +89,7 @@ async function main() {
     await UniswappyV2EthPair.updateReserves(provider, markets.allMarketPairs);
     console.log(`*** checking market iteration #${marketCheckIteration++}  ...`);
     console.log(JSON.stringify(markets.allMarketPairs.slice(0, 10), null, 2));
+    helloworld();
     // console.log(JSON.stringify(createAddressMap(markets.allMarketPairs).slice(0, 10), null, 2));
 
     // const filteredData = filterByAddress(data, addressesToFilterBy);
