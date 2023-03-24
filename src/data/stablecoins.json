@@ -1,0 +1,138 @@
+[
+    {
+        "symbol": "USDT",
+        "address": "0xdac17f958d2ee523a2206206994597c13d831ec7"
+    },
+    {
+        "symbol": "USDC",
+        "address": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+    },
+    {
+        "symbol": "BUSD",
+        "address": "0x4Fabb145d64652a948d72533023f6E7A623C7C53"
+    },
+    {
+        "symbol": "DAI",
+        "address": "0x6b175474e89094c44da98b954eedeac495271d0f"
+    },
+    {
+        "symbol": "TUSD",
+        "address": "0x0000000000085d4780B73119b644AE5ecd22b376"
+    },
+    {
+        "symbol": "USDP",
+        "address": "0x8e870d67f660d95d5be530380d0ec0bd388289e1"
+    },
+    {
+        "symbol": "USDD",
+        "address": "0x0c10bf8fcb7bf5412187a595ab97a3609160b5c6"
+    },
+    {
+        "symbol": "GUSD",
+        "address": "0x056Fd409E1d7A124BD7017459dFEa2F387b6d5Cd"
+    },
+    {
+        "symbol": "FEI",
+        "address": "0x956F47F50A910163D8BF957Cf5846D573E7f87CA"
+    },
+    {
+        "symbol": "USTC",
+        "address": "0xa47c8bf37f92aBed4A126BDA807A7b7498661acD"
+    },
+    {
+        "symbol": "FRAX",
+        "address": "0x853d955acef822db058eb8505911ed77f175b99e"
+    },
+    {
+        "symbol": "LUSD",
+        "address": "0x5f98805A4E8be255a32880FDeC7F6728C6568bA0"
+    },
+    {
+        "symbol": "EURS",
+        "address": "0xdb25f211ab05b1c97d595516f45794528a807ad8"
+    },
+    {
+        "symbol": "OUSD",
+        "address": "0x2A8e1E676Ec238d8A992307B495b45B3fEAa5e86"
+    },
+    {
+        "symbol": "sUSD",
+        "address": "0x57Ab1ec28D129707052df4dF418D58a2D46d5f51"
+    },
+    {
+        "symbol": "CUSD",
+        "address": "0x765de816845861e75a25fca122bb6898b8b1282a"
+    },
+    {
+        "symbol": "XSGD",
+        "address": "0x70e8de73ce538da2beed35d14187f6959a8eca96"
+    },
+    {
+        "symbol": "USDK",
+        "address": "0x1c48f86ae57291f7686349f12601910bd8d470bb"
+    },
+    {
+        "symbol": "HUSD",
+        "address": "0xdf574c24545e5ffecb9a659c229253d4111d87e1"
+    },
+    {
+        "symbol": "EUROC",
+        "address": "0x1abaea1f7c830bd89acc67ec4af516284b1bc33c"
+    },
+    {
+        "symbol": "RSV",
+        "address": "0x196f4727526eA7FB1e17b2071B3d8eAA38486988"
+    },
+    {
+        "symbol": "CEUR",
+        "address": "0xd8763cba276a3738e6de85b4b3bf5fded6d6ca73"
+    },
+    {
+        "symbol": "IDRT",
+        "address": "0x998FFE1E43fAcffb941dc337dD0468d52bA5b48A"
+    },
+    {
+        "symbol": "XCHF",
+        "address": "0xb4272071ecadd69d933adcd19ca99fe80664fc08"
+    },
+    {
+        "symbol": "DGX",
+        "address": "0x4f3afec4e5a3f2a6a1a411def7d7dfe50ee057bf"
+    },
+    {
+        "symbol": "USDS",
+        "address": "0xa4bdb11dc0a2bec88d24a3aa1e6bb17201112ebe"
+    },
+    {
+        "symbol": "AGEUR",
+        "address": "0x1a7e4e63778b4f12a199c062f3efdd288afcbce8"
+    },
+    {
+        "symbol": "CUSDT",
+        "address": "0xf650c3d88d12db855b8bf7d11be6c55a4e07dcc9"
+    },
+    {
+        "symbol": "EURT",
+        "address": "0xc581b735a1688071a1746c968e0798d642ede491"
+    },
+    {
+        "symbol": "MAI",
+        "address": "0xa3Fa99A148fA48D14Ed51d610c367C61876997F1"
+    },
+    {
+        "symbol": "USDP",
+        "address": "0x1456688345527bE1f37E9e627DA0837D6f08C925"
+    },
+    {
+        "symbol": "XDAI",
+        "address": "0x1456688345527bE1f37E9e627DA0837D6f08C925"
+    },
+    {
+        "symbol": "MIM",
+        "address": "0x99d8a9c45b2eca8864373a26d1459e3dff1e17f3"
+    },
+    {
+        "symbol": "YUSD",
+        "address": "0x111111111111ed1D73f860F57b2798b683f2d325"
+    }
+]

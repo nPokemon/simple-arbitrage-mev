@@ -27,3 +27,16 @@ $ PRIVATE_KEY=__PRIVATE_KEY_FROM_ABOVE__ \
     FLASHBOTS_RELAY_SIGNING_KEY=__RANDOM_ETHEREUM_PRIVATE_KEY__ \
       npm run start
 ```
+
+My Usage
+======================
+
+```
+npm run build
+```
+
+then:
+
+```
+node build/index.js
+```

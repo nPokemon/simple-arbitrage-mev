@@ -160,6 +160,10 @@ export class UniswappyV2EthPair extends EthMarket {
     return numerator.div(denominator);
   }
 
+  // getFirstTokenAddresses(): Array {
+  //   return this._tokenBalances[0];
+  // }
+
   async sellTokensToNextMarket(tokenIn: string, amountIn: BigNumber, ethMarket: EthMarket): Promise<MultipleCallData> {
     if (ethMarket.receiveDirectly(tokenIn) === true) {
       const exchangeCall = await this.sellTokens(tokenIn, amountIn, ethMarket.marketAddress)
