@@ -1,14 +1,16 @@
 // import { FlashbotsBundleProvider } from "@flashbots/ethers-provider-bundle";
 import { Contract, providers, Wallet } from "ethers";
 // import { BUNDLE_EXECUTOR_ABI } from "./abi";
-import { UniswappyV2EthPair } from "./UniswappyV2EthPair";
+import { UniswappyV2EthPair, GroupedMarkets } from "./UniswappyV2EthPair";
 import { FACTORY_ADDRESSES } from "./addresses";
 // import { Arbitrage } from "./Arbitrage";
 import { get } from "https"
 import { getDefaultRelaySigningKey } from "./utils";
 // import * as stablecoinAddressesData from './data/stablecoins.json';
 import stablecoinAddressesData from './data/stablecoins.json';
+const pairs = require('./data/pairs.json');
 const { helloworld } = require('./helloworld.js');
+const { FindArb } = require('./FindArb.js');
 
 // const ETHEREUM_RPC_URL = process.env.ETHEREUM_RPC_URL || "http://127.0.0.1:8545"
 // const ETHEREUM_RPC_URL = process.env.ETHEREUM_RPC_URL || "https://eth-goerli.g.alchemy.com/v2/2I4tGEHZgeRbdF0TyOKx-c9H_824BAJk"
@@ -38,6 +40,19 @@ const HEALTHCHECK_URL = process.env.HEALTHCHECK_URL || ""
 const provider = new providers.StaticJsonRpcProvider(ETHEREUM_RPC_URL);
 const stablecoinAddresses = stablecoinAddressesData.map(stablecoinAddress => stablecoinAddress.address);
 let marketCheckIteration = 1;
+
+const usdt = "0xdAC17F958D2ee523a2206206994597C13D831ec7";
+let tokenIn = {
+  'address': usdt,
+  'symbol': 'USDT',
+  'decimal': 6,
+};
+let tokenOut = {
+  'address': usdt,
+  'symbol': 'USDT',
+  'decimal': 6,
+};
+const maxHops = 5
 
 // const arbitrageSigningWallet = new Wallet(PRIVATE_KEY);
 // const flashbotsRelaySigningWallet = new Wallet(FLASHBOTS_RELAY_SIGNING_KEY);
@@ -83,14 +98,27 @@ async function main() {
   //   new Contract(BUNDLE_EXECUTOR_ADDRESS, BUNDLE_EXECUTOR_ABI, provider) )
   console.log('running main...');
   console.log(stablecoinAddresses);
+  let markets: GroupedMarkets;
 
-  const markets = await UniswappyV2EthPair.getUniswapMarketsByToken(provider, FACTORY_ADDRESSES);
+  try {
+    markets = await UniswappyV2EthPair.getUniswapMarketsByToken(provider, FACTORY_ADDRESSES);
+  } catch (error) {
+    console.error(`Error retrieving Uniswap markets...`);
+  }
+
   provider.on('block', async (blockNumber) => {
-    await UniswappyV2EthPair.updateReserves(provider, markets.allMarketPairs);
-    console.log(`*** checking market iteration #${marketCheckIteration++}  ...`);
-    console.log(JSON.stringify(markets.allMarketPairs.slice(0, 10), null, 2));
-    helloworld();
-    // console.log(JSON.stringify(createAddressMap(markets.allMarketPairs).slice(0, 10), null, 2));
+    try {
+      await UniswappyV2EthPair.updateReserves(provider, markets.allMarketPairs);
+      console.log(`*** checking market iteration #${marketCheckIteration++}  ...`);
+      console.log(JSON.stringify(markets.allMarketPairs.slice(0, 10), null, 2));
+  
+      // var bestTrades = findArb(data.slice(0, 100), tokenIn, tokenOut, maxHops, [], [], bestTrades, count = 5);
+      // trades = findArb(pairs, tokenIn, tokenOut, maxHops, currentPairs, path, bestTrades)
+      let bestTrades = await FindArb(pairs, tokenIn, tokenOut, maxHops, [], [tokenIn], [], 5);
+      console.log(bestTrades);
+    } catch (error) { 
+      console.error(`Error during updateReserves, trying again...`);
+    }
 
     // const filteredData = filterByAddress(data, addressesToFilterBy);
 

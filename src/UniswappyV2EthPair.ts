@@ -16,7 +16,7 @@ const blacklistTokens = [
   '0xD75EA151a61d06868E31F8988D28DFE5E9df57B4'
 ]
 
-interface GroupedMarkets {
+export interface GroupedMarkets {
   marketsByToken: MarketsByToken;
   allMarketPairs: Array<UniswappyV2EthPair>;
 }

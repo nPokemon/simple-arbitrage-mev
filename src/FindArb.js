@@ -1,4 +1,3 @@
-const data = require('./data/pairs.json');
 const Decimal = require('decimal.js');
 
 var _pj;
@@ -237,7 +236,8 @@ export function FindArb(pairs, tokenIn, tokenOut, maxHops, currentPairs, path, b
       }
     } else {
       if (maxHops > 1 && pairs.length > 1) {
-        bestTrades = findArb(pairsExcludingThisPair, tempOut, tokenOut, maxHops - 1, currentPairs.concat([pair]), newPath, bestTrades, count);
+        pairsExcludingThisPair = pairs.slice(0, i).concat(pairs.slice(i + 1));
+        bestTrades = FindArb(pairsExcludingThisPair, tempOut, tokenOut, maxHops - 1, currentPairs.concat([pair]), newPath, bestTrades, count);
       }
     }
   }
