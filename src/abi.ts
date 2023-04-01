@@ -52,7 +52,38 @@ export const BUNDLE_EXECUTOR_ABI = [{
   "outputs": [],
   "stateMutability": "payable",
   "type": "function"
-}, {"stateMutability": "payable", "type": "receive"}]
+}, {"stateMutability": "payable", "type": "receive"},
+{
+  "constant": true,
+  "inputs": [],
+  "name": "symbol",
+  "outputs": [
+    {
+      "internalType": "string",
+      "name": "",
+      "type": "string"
+    }
+  ],
+  "payable": false,
+  "stateMutability": "view",
+  "type": "function"
+},
+{
+  "constant": true,
+  "inputs": [],
+  "name": "decimals",
+  "outputs": [
+    {
+      "internalType": "uint8",
+      "name": "",
+      "type": "uint8"
+    }
+  ],
+  "payable": false,
+  "stateMutability": "view",
+  "type": "function"
+}
+]
 
 
 export const UNISWAP_PAIR_ABI = [{
