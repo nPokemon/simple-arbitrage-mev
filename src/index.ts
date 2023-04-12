@@ -6,14 +6,10 @@ import { FACTORY_ADDRESSES } from "./addresses";
 // import { Arbitrage } from "./Arbitrage";
 import { get } from "https"
 import { getDefaultRelaySigningKey } from "./utils";
-// import * as stablecoinsList from './data/stablecoins.json';
 import stablecoinsList from './data/stablecoins.json';
-import stablecoinAddressesData, { StablecoinAddresses } from './data/stablecoinsdata';
+import { wethData, stablecoinAddressesData, StablecoinAddresses } from './data/stablecoinsdata';
 import { buildStablecoinDataFile } from './buildStablesFile';
-import * as fs from 'fs';
-import * as path from 'path';
 const pairs = require('./data/pairs.json');
-const { helloworld } = require('./helloworld.js');
 const { FindArb } = require('./FindArb.js');
 
 // const ETHEREUM_RPC_URL = process.env.ETHEREUM_RPC_URL || "http://127.0.0.1:8545"
@@ -114,13 +110,16 @@ async function main() {
       // get list of all stable coins
       // filter pairs for only stable coins using list for new list of stablecoin pairs
       const filteredMarketPairs = markets.allMarketPairs.filter(pool => {
+        const wethAddress = Object.values(wethData)[0].address.toLowerCase();
         const poolTokens = pool["_tokens"].map(token => token.toLowerCase());
-        // console.log(`trying token pair: ${poolTokens[0]} // ${poolTokens[1]}`);
-        // console.table([
-        //   { name: 'Tokens', value: `${poolTokens[0]} // ${poolTokens[1]}` },
-        //   { name: 'Stables?', value: `${!!stablecoinAddressesData[poolTokens[0].toLowerCase()]} // ${!!stablecoinAddressesData[poolTokens[1].toLowerCase()]}` }
-        // ]);
-        return (stablecoinAddressesData[poolTokens[0].toLowerCase()] && stablecoinAddressesData[poolTokens[1].toLowerCase()]);
+
+        if (poolTokens[0].toLowerCase() === wethAddress) {
+          return !!stablecoinAddressesData[poolTokens[1].toLowerCase()];
+        } else if (poolTokens[1].toLowerCase() === wethAddress) {
+          return !!stablecoinAddressesData[poolTokens[0].toLowerCase()];
+        } else {
+          return false;
+        }
       });
       
       // in FindArb convert each pair object to the one expected by FindArb
