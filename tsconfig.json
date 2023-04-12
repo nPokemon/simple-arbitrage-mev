@@ -64,6 +64,7 @@
   "files": [
     "src/index.ts",
     "src/data/stablecoins.json",
+    "src/data/stablecoinsdata.ts",
     "src/data/pairs.json"
   ],
   "include": [

@@ -167,6 +167,64 @@ function sortTrades(trades, newTrade) {
   });
 }
 
+// {
+//   "_marketAddress": "0x3926a168C11a816e10c13977f75F488BffFE88E4",
+//   "_tokens": [
+//     "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+//     "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
+//   ],
+//   "_protocol": "",
+//   "_tokenBalances": {
+//     "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48": {
+//       "type": "BigNumber",
+//       "hex": "0x03ced367cc"
+//     },
+//     "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2": {
+//       "type": "BigNumber",
+//       "hex": "0x8051533cca360064"
+//     }
+//   }
+// },
+
+// {
+//   "index": 0,
+//   "address": "0xB4e16d0168e52d35CaCD2c6185b44281Ec28C9Dc",
+//   "token0": {
+//     "address": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+//     "symbol": "USDC",
+//     "decimal": 6
+//   },
+//   "token1": {
+//     "address": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+//     "symbol": "WETH",
+//     "decimal": 18
+//   },
+//   "reserve0": 176560092727090,
+//   "reserve1": 5.2459530415773e+23
+// },
+function convertLiquidityPool(lp, index) {
+  const token0Address = lp._tokens[0];
+  const token1Address = lp._tokens[1];
+  const token0 = stableCoins.find((coin) => coin.address.toLowerCase() === token0Address.toLowerCase());
+  const token1 = stableCoins.find((coin) => coin.address.toLowerCase() === token1Address.toLowerCase());
+  return {
+    index,
+    address: lp._marketAddress,
+    token0: {
+      address: token0.address,
+      symbol: token0.symbol,
+      decimal: token0.decimal
+    },
+    token1: {
+      address: token1.address,
+      symbol: token1.symbol,
+      decimal: token1.decimal
+    },
+    reserve0: parseInt(lp._tokenBalances[token0Address].hex, 16),
+    reserve1: parseInt(lp._tokenBalances[token1Address].hex, 16)
+  };
+}
+
 export function FindArb(pairs, tokenIn, tokenOut, maxHops, currentPairs, path, bestTrades, count = 5) {
   // Declare variables used in the function
   var Ea, Eb, newPath, newTrade, pair, pairsExcludingThisPair, tempOut;
@@ -235,6 +293,7 @@ export function FindArb(pairs, tokenIn, tokenOut, maxHops, currentPairs, path, b
         bestTrades = bestTrades.slice(0, count);
       }
     } else {
+      // console.log('condition #6');
       if (maxHops > 1 && pairs.length > 1) {
         pairsExcludingThisPair = pairs.slice(0, i).concat(pairs.slice(i + 1));
         bestTrades = FindArb(pairsExcludingThisPair, tempOut, tokenOut, maxHops - 1, currentPairs.concat([pair]), newPath, bestTrades, count);

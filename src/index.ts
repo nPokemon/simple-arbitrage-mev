@@ -1,13 +1,17 @@
 // import { FlashbotsBundleProvider } from "@flashbots/ethers-provider-bundle";
 import { Contract, providers, Wallet } from "ethers";
-// import { BUNDLE_EXECUTOR_ABI } from "./abi";
+import { BUNDLE_EXECUTOR_ABI } from "./abi";
 import { UniswappyV2EthPair, GroupedMarkets } from "./UniswappyV2EthPair";
 import { FACTORY_ADDRESSES } from "./addresses";
 // import { Arbitrage } from "./Arbitrage";
 import { get } from "https"
 import { getDefaultRelaySigningKey } from "./utils";
-// import * as stablecoinAddressesData from './data/stablecoins.json';
-import stablecoinAddressesData from './data/stablecoins.json';
+// import * as stablecoinsList from './data/stablecoins.json';
+import stablecoinsList from './data/stablecoins.json';
+import stablecoinAddressesData, { StablecoinAddresses } from './data/stablecoinsdata';
+import { buildStablecoinDataFile } from './buildStablesFile';
+import * as fs from 'fs';
+import * as path from 'path';
 const pairs = require('./data/pairs.json');
 const { helloworld } = require('./helloworld.js');
 const { FindArb } = require('./FindArb.js');
@@ -38,7 +42,7 @@ const BUNDLE_EXECUTOR_ADDRESS = process.env.BUNDLE_EXECUTOR_ADDRESS || ""
 
 const HEALTHCHECK_URL = process.env.HEALTHCHECK_URL || ""
 const provider = new providers.StaticJsonRpcProvider(ETHEREUM_RPC_URL);
-const stablecoinAddresses = stablecoinAddressesData.map(stablecoinAddress => stablecoinAddress.address);
+const stablecoinAddresses = stablecoinsList.map(stablecoinAddress => stablecoinAddress.address);
 let marketCheckIteration = 1;
 
 const usdt = "0xdAC17F958D2ee523a2206206994597C13D831ec7";
@@ -72,14 +76,6 @@ function healthcheck() {
   get(HEALTHCHECK_URL).on('error', console.error);
 }
 
-// function filterByAddress(arr: ObjectWithAddress[], addresses: string[]): ObjectWithAddress[] {
-//   const map = new Map<string, ObjectWithAddress>();
-//   for (const obj of arr) {
-//     map.set(obj.address, obj);
-//   }
-//   return addresses.map(addr => map.get(addr)).filter(Boolean) as ObjectWithAddress[];
-// }
-
 function createAddressMap(arr: ObjectWithAddress[]): Map<Address, ObjectWithAddress> {
   const map = new Map();
   for (const obj of arr) {
@@ -87,6 +83,9 @@ function createAddressMap(arr: ObjectWithAddress[]): Map<Address, ObjectWithAddr
   }
   return map;
 }
+
+// build stablecoin data file
+// buildStablecoinDataFile(stablecoinsList, BUNDLE_EXECUTOR_ABI, provider);
 
 async function main() {
   // console.log("Searcher Wallet Address: " + await arbitrageSigningWallet.getAddress())
@@ -97,7 +96,8 @@ async function main() {
   //   flashbotsProvider,
   //   new Contract(BUNDLE_EXECUTOR_ADDRESS, BUNDLE_EXECUTOR_ABI, provider) )
   console.log('running main...');
-  console.log(stablecoinAddresses);
+  // console.log(stablecoinAddresses);
+  console.log(stablecoinAddressesData);
   let markets: GroupedMarkets;
 
   try {
@@ -110,14 +110,31 @@ async function main() {
     try {
       await UniswappyV2EthPair.updateReserves(provider, markets.allMarketPairs);
       console.log(`*** checking market iteration #${marketCheckIteration++}  ...`);
-      console.log(JSON.stringify(markets.allMarketPairs.slice(0, 10), null, 2));
+
+      // get list of all stable coins
+      // filter pairs for only stable coins using list for new list of stablecoin pairs
+      const filteredMarketPairs = markets.allMarketPairs.filter(pool => {
+        const poolTokens = pool["_tokens"].map(token => token.toLowerCase());
+        // console.log(`trying token pair: ${poolTokens[0]} // ${poolTokens[1]}`);
+        // console.table([
+        //   { name: 'Tokens', value: `${poolTokens[0]} // ${poolTokens[1]}` },
+        //   { name: 'Stables?', value: `${!!stablecoinAddressesData[poolTokens[0].toLowerCase()]} // ${!!stablecoinAddressesData[poolTokens[1].toLowerCase()]}` }
+        // ]);
+        return (stablecoinAddressesData[poolTokens[0].toLowerCase()] && stablecoinAddressesData[poolTokens[1].toLowerCase()]);
+      });
+      
+      // in FindArb convert each pair object to the one expected by FindArb
+      console.log(JSON.stringify(filteredMarketPairs.slice(0, 10), null, 2));
+      // console.log(JSON.stringify(markets.allMarketPairs.slice(0, 10), null, 2));
+      console.log(`filteredMarketPairs length: ${filteredMarketPairs.length}`);
   
-      // var bestTrades = findArb(data.slice(0, 100), tokenIn, tokenOut, maxHops, [], [], bestTrades, count = 5);
-      // trades = findArb(pairs, tokenIn, tokenOut, maxHops, currentPairs, path, bestTrades)
       let bestTrades = await FindArb(pairs, tokenIn, tokenOut, maxHops, [], [tokenIn], [], 5);
       console.log(bestTrades);
     } catch (error) { 
-      console.error(`Error during updateReserves, trying again...`);
+      console.error(`Error during updateReserves...`);
+      console.error(`error: ${(error as any).reason}`);
+      // console.error(error);
+      console.error(`trying again...`);
     }
 
     // const filteredData = filterByAddress(data, addressesToFilterBy);
