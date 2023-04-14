@@ -9,8 +9,10 @@ import { getDefaultRelaySigningKey } from "./utils";
 import stablecoinsList from './data/stablecoins.json';
 import { wethData, stablecoinAddressesData, StablecoinAddresses } from './data/stablecoinsdata';
 import { buildStablecoinDataFile } from './buildStablesFile';
+import { performance } from 'perf_hooks';
+
 const pairs = require('./data/pairs.json');
-const { FindArb } = require('./FindArb.js');
+const { FindArb, convertLiquidityPool } = require('./FindArb.js');
 
 // const ETHEREUM_RPC_URL = process.env.ETHEREUM_RPC_URL || "http://127.0.0.1:8545"
 // const ETHEREUM_RPC_URL = process.env.ETHEREUM_RPC_URL || "https://eth-goerli.g.alchemy.com/v2/2I4tGEHZgeRbdF0TyOKx-c9H_824BAJk"
@@ -41,43 +43,14 @@ const provider = new providers.StaticJsonRpcProvider(ETHEREUM_RPC_URL);
 const stablecoinAddresses = stablecoinsList.map(stablecoinAddress => stablecoinAddress.address);
 let marketCheckIteration = 1;
 
-const usdt = "0xdAC17F958D2ee523a2206206994597C13D831ec7";
-let tokenIn = {
-  'address': usdt,
-  'symbol': 'USDT',
-  'decimal': 6,
-};
-let tokenOut = {
-  'address': usdt,
-  'symbol': 'USDT',
-  'decimal': 6,
-};
-const maxHops = 5
-
 // const arbitrageSigningWallet = new Wallet(PRIVATE_KEY);
 // const flashbotsRelaySigningWallet = new Wallet(FLASHBOTS_RELAY_SIGNING_KEY);
-
-type Address = string;
-type Symbol = string;
-
-interface ObjectWithAddress {
-  address: Address;
-  symbol: Symbol;
-}
 
 function healthcheck() {
   if (HEALTHCHECK_URL === "") {
     return
   }
   get(HEALTHCHECK_URL).on('error', console.error);
-}
-
-function createAddressMap(arr: ObjectWithAddress[]): Map<Address, ObjectWithAddress> {
-  const map = new Map();
-  for (const obj of arr) {
-    map.set(obj.address, obj);
-  }
-  return map;
 }
 
 // build stablecoin data file
@@ -91,26 +64,54 @@ async function main() {
   //   arbitrageSigningWallet,
   //   flashbotsProvider,
   //   new Contract(BUNDLE_EXECUTOR_ADDRESS, BUNDLE_EXECUTOR_ABI, provider) )
-  console.log('running main...');
+  console.log('\nrunning main...\n');
   // console.log(stablecoinAddresses);
-  console.log(stablecoinAddressesData);
+  // console.log(stablecoinAddressesData);
   let markets: GroupedMarkets;
 
   try {
     markets = await UniswappyV2EthPair.getUniswapMarketsByToken(provider, FACTORY_ADDRESSES);
   } catch (error) {
-    console.error(`Error retrieving Uniswap markets...`);
+    console.error(`\nError retrieving Uniswap markets...\n`);
   }
 
   provider.on('block', async (blockNumber) => {
     try {
       await UniswappyV2EthPair.updateReserves(provider, markets.allMarketPairs);
-      console.log(`*** checking market iteration #${marketCheckIteration++}  ...`);
+      console.log(`\n************************************ ...`);
+      console.log(`*** checking market iteration #${marketCheckIteration++} *** ...`);
+      console.log(`************************************ ...\n`);
+
+      // define vars for finding arbitrage pathways
+      const wethDataObj = Object.values(wethData)[0];
+      const wethAddress = wethDataObj.address.toLowerCase();
+      let tokenIn = {
+        'address': wethAddress,
+        'symbol': wethDataObj.symbol,
+        'decimals': wethDataObj.decimals,
+      };
+      let tokenOut = {
+        'address': wethAddress,
+        'symbol': wethDataObj.symbol,
+        'decimals': wethDataObj.decimals,
+      };
+      // const usdt = "0xdAC17F958D2ee523a2206206994597C13D831ec7";
+      // let tokenIn = {
+      //   'address': usdt.toLowerCase(),
+      //   'symbol': 'USDT',
+      //   'decimal': 6,
+      // };
+      // let tokenOut = {
+      //   'address': usdt.toLowerCase(),
+      //   'symbol': 'USDT',
+      //   'decimal': 6,
+      // };
+      const maxHops = 5;
 
       // get list of all stable coins
       // filter pairs for only stable coins using list for new list of stablecoin pairs
       const filteredMarketPairs = markets.allMarketPairs.filter(pool => {
-        const wethAddress = Object.values(wethData)[0].address.toLowerCase();
+        // const wethAddress = Object.values(wethData)[0].address.toLowerCase();
         const poolTokens = pool["_tokens"].map(token => token.toLowerCase());
 
         if (poolTokens[0].toLowerCase() === wethAddress) {
@@ -123,17 +124,43 @@ async function main() {
       });
       
       // in FindArb convert each pair object to the one expected by FindArb
-      console.log(JSON.stringify(filteredMarketPairs.slice(0, 10), null, 2));
+      // console.log(JSON.stringify(filteredMarketPairs.slice(0, 10), null, 2));
       // console.log(JSON.stringify(markets.allMarketPairs.slice(0, 10), null, 2));
-      console.log(`filteredMarketPairs length: ${filteredMarketPairs.length}`);
+      console.log(`filteredMarketPairs length: ${filteredMarketPairs.length}\n`);
   
-      let bestTrades = await FindArb(pairs, tokenIn, tokenOut, maxHops, [], [tokenIn], [], 5);
+      // console.log('filteredMarketPairs (pre FindArb): ');
+      // console.log(filteredMarketPairs);
+
+      const convertedFilteredMarketPairs = filteredMarketPairs.map(convertLiquidityPool);
+      let startFindArb = performance.now();
+      let bestTrades = await FindArb(convertedFilteredMarketPairs, tokenIn, tokenOut, maxHops, [], [tokenIn], [], 5);
+      // let bestTrades = await FindArb(pairs, tokenIn, tokenOut, maxHops, [], [tokenIn], [], 5);
+      let finishFindArb = performance.now();
+      const totalTimeFindArb = (finishFindArb - startFindArb) / 1000;
+      if (totalTimeFindArb >= 60) {
+        const minutes = Math.floor(totalTimeFindArb / 60);
+        const seconds = (totalTimeFindArb % 60).toFixed(2);
+        console.log(`\nThe asynchronous call took ${minutes} minute${minutes > 1 ? 's' : ''} and ${seconds} seconds to complete.\n`);
+      } else {
+        console.log(`\nThe asynchronous call took ${totalTimeFindArb.toFixed(2)} seconds to complete.\n`);
+      }
+
+      console.log('\x1b[32m%s\x1b[0m', '\n*************************');
+      console.log('\x1b[32m%s\x1b[0m', '**       SUCCESS       **');
+      console.log('\x1b[32m%s\x1b[0m', '*************************');
+      console.log('bestTrades: ')
       console.log(bestTrades);
+
+      bestTrades.map((trade: any) => console.table(trade.path));
+      // console.log(JSON.stringify(bestTrades.slice(0, 10), null, 2));
     } catch (error) { 
-      console.error(`Error during updateReserves...`);
-      console.error(`error: ${(error as any).reason}`);
+      console.log('\x1b[31m%s\x1b[0m', '\n*************************');
+      console.log('\x1b[31m%s\x1b[0m', '**        ERROR        **');
+      console.log('\x1b[31m%s\x1b[0m', '*************************');
+      console.error(`\nError during updateReserves ...\n`);
+      console.error(`error: ${(error as any)}\n`);
       // console.error(error);
-      console.error(`trying again...`);
+      console.error(`trying again ...\n`);
     }
 
     // const filteredData = filterByAddress(data, addressesToFilterBy);
