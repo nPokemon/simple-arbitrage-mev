@@ -95,23 +95,11 @@ async function main() {
         'symbol': wethDataObj.symbol,
         'decimals': wethDataObj.decimals,
       };
-      // const usdt = "0xdAC17F958D2ee523a2206206994597C13D831ec7";
-      // let tokenIn = {
-      //   'address': usdt.toLowerCase(),
-      //   'symbol': 'USDT',
-      //   'decimal': 6,
-      // };
-      // let tokenOut = {
-      //   'address': usdt.toLowerCase(),
-      //   'symbol': 'USDT',
-      //   'decimal': 6,
-      // };
       const maxHops = 5;
 
       // get list of all stable coins
       // filter pairs for only stable coins using list for new list of stablecoin pairs
       const filteredMarketPairs = markets.allMarketPairs.filter(pool => {
-        // const wethAddress = Object.values(wethData)[0].address.toLowerCase();
         const poolTokens = pool["_tokens"].map(token => token.toLowerCase());
 
         if (poolTokens[0].toLowerCase() === wethAddress) {
@@ -124,13 +112,8 @@ async function main() {
       });
       
       // in FindArb convert each pair object to the one expected by FindArb
-      // console.log(JSON.stringify(filteredMarketPairs.slice(0, 10), null, 2));
-      // console.log(JSON.stringify(markets.allMarketPairs.slice(0, 10), null, 2));
       console.log(`filteredMarketPairs length: ${filteredMarketPairs.length}\n`);
   
-      // console.log('filteredMarketPairs (pre FindArb): ');
-      // console.log(filteredMarketPairs);
-
       const convertedFilteredMarketPairs = filteredMarketPairs.map(convertLiquidityPool);
       let startFindArb = performance.now();
       let bestTrades = await FindArb(convertedFilteredMarketPairs, tokenIn, tokenOut, maxHops, [], [tokenIn], [], 5);
@@ -150,16 +133,13 @@ async function main() {
       console.log('\x1b[32m%s\x1b[0m', '*************************');
       console.log('bestTrades: ')
       console.log(bestTrades);
-
       bestTrades.map((trade: any) => console.table(trade.path));
-      // console.log(JSON.stringify(bestTrades.slice(0, 10), null, 2));
     } catch (error) { 
       console.log('\x1b[31m%s\x1b[0m', '\n*************************');
       console.log('\x1b[31m%s\x1b[0m', '**        ERROR        **');
       console.log('\x1b[31m%s\x1b[0m', '*************************');
       console.error(`\nError during updateReserves ...\n`);
       console.error(`error: ${(error as any)}\n`);
-      // console.error(error);
       console.error(`trying again ...\n`);
     }
 

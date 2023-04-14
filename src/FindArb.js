@@ -172,6 +172,9 @@ function sortTrades(trades, newTrade) {
   });
 }
 
+// convert market pair LPs from eth node into algo expected format
+
+// CONVERT:
 // {
 //   "_marketAddress": "0x3926a168C11a816e10c13977f75F488BffFE88E4",
 //   "_tokens": [
@@ -190,7 +193,7 @@ function sortTrades(trades, newTrade) {
 //     }
 //   }
 // },
-
+// INTO:
 // {
 //   "index": 0,
 //   "address": "0xB4e16d0168e52d35CaCD2c6185b44281Ec28C9Dc",
@@ -208,10 +211,6 @@ function sortTrades(trades, newTrade) {
 //   "reserve1": 5.2459530415773e+23
 // },
 export function convertLiquidityPool(lp, index) {
-
-  // console.log('lp: '); console.log(lp);
-  // console.log('index: '); console.log(index);
-
   const token0Address = lp._tokens[0];
   const token1Address = lp._tokens[1];
   const token0 = allTokens[token0Address.toLowerCase()];
@@ -236,24 +235,8 @@ export function convertLiquidityPool(lp, index) {
 }
 
 export function FindArb(pairs, tokenIn, tokenOut, maxHops, currentPairs, path, bestTrades, count = 5) {
-  // console.log('starting FindArb - pairs are ... ');
-  // console.log(pairs);
-
   // Declare variables used in the function
   let Ea, Eb, newPath, newTrade, pair, pairsExcludingThisPair, tempOut;
-  // console.log('converting pairs ..');
-  // console.log('checkpoint 0.1 ... ');
-  // const convertedPairs = pairs.map(convertLiquidityPool);
-
-  // console.log(pairs);
-
-  // console.log('trying to print converted market pairs (inside FindArb) ...');
-  // console.log(JSON.stringify(convertedPairs, null, 2));
-
-  // pairs = convertedPairs;
-  // console.log('converted pairs ..');
-
-  // console.log('checkpoint 0.2: abbout to loop ..');
 
   // Loop through all pairs in the pairs array
   for (let i = 0, _pj_a = pairs.length; i < _pj_a; i += 1) {
@@ -261,8 +244,6 @@ export function FindArb(pairs, tokenIn, tokenOut, maxHops, currentPairs, path, b
     newPath = path.slice();
     // Get the current pair
     pair = pairs[i];
-
-    // console.log(pair);
 
     // Check if the current pair contains the tokenIn as either token0 or token1
     // console.log(`pair: ${JSON.stringify(pair, null, 2)}`);
@@ -274,7 +255,6 @@ export function FindArb(pairs, tokenIn, tokenOut, maxHops, currentPairs, path, b
     if (pair["reserve0"] / Math.pow(10, pair["token0"]["decimals"]) < 1 || pair["reserve1"] / Math.pow(10, pair["token1"]["decimals"]) < 1) {
       continue; // Skip to the next pair if either reserve is less than 14
     }
-    // console.log('checkpoint #1');
     // Determine which token in the current pair is the output token
     if (tokenIn["address"].toLowerCase() === pair["token0"]["address"].toLowerCase()) {
       tempOut = pair["token1"]; // If tokenIn is token0, then token1 is the output token
@@ -284,21 +264,9 @@ export function FindArb(pairs, tokenIn, tokenOut, maxHops, currentPairs, path, b
 
     // Add the output token to the path
     newPath.push(tempOut);
-    // console.log('checkpoint #2');
-
-    // const testdata = [
-    //   {
-    //     'tempOut.symbol': tempOut.symbol.toLowerCase(),
-    //     'tempOut.address': tempOut.address.toLowerCase(),
-    //     'tokenOut.symbol': tokenOut.symbol.toLowerCase(),
-    //     'tokenOut.address': tokenOut.address.toLowerCase()
-    //   }
-    // ];
-    // console.table(testdata);
 
     // Check if the output token is the desired tokenOut and the path has more than 2 tokens
     if (tempOut["address"].toLowerCase() === tokenOut["address"].toLowerCase() && path.length > 2) {
-      // console.log('checkpoint #3');
       // Calculate Ea and Eb using the currentPairs array plus the current pair
       // Ea represents the effective price of buying tokenOut, while Eb represents the effective price of selling tokenOut.
       // [Ea, Eb] = getEaEb(tokenOut, currentPairs + [pair]);
@@ -310,12 +278,11 @@ export function FindArb(pairs, tokenIn, tokenOut, maxHops, currentPairs, path, b
         "Ea": Ea,
         "Eb": Eb
       };
-      // console.log('checkpoint #4');
+
       // Check if Ea and Eb are both defined and Ea is less than Eb
       if (Ea && Eb && Ea < Eb) {
         // Calculate the optimal amount of tokenOut for the trade
         newTrade["optimalAmount"] = getOptimalAmount(Ea, Eb);
-        // console.log('checkpoint #5');
 
         // Check if the optimal amount is greater than 0
         if (newTrade["optimalAmount"] > 0) {
@@ -328,41 +295,18 @@ export function FindArb(pairs, tokenIn, tokenOut, maxHops, currentPairs, path, b
         } else {
           continue;
         }
-        // console.log('checkpoint #6');
+
         bestTrades = sortTrades(bestTrades, newTrade);
         bestTrades.reverse();
         bestTrades = bestTrades.slice(0, count);
       }
     } else {
-      // console.log('checkpoint #7');
-      // console.log('condition #6');
       if (maxHops > 1 && pairs.length > 1) {
-        // console.log('checkpoint #8');
         pairsExcludingThisPair = pairs.slice(0, i).concat(pairs.slice(i + 1));
-        // console.log('checkpoint #9');
-
-        // console.table(tempOut);
-        // console.table(tokenOut);
-
-        // console.table({
-        //   tempOut: tempOut,
-        //   tokenOut: tokenOut,
-        //   "maxHops - 1": maxHops - 1,
-        //   newPath: JSON.stringify(newPath, null, 2),
-        //   bestTrades: bestTrades,
-        //   count: count
-        // });
-
-        // console.log('pairs: ');
-        // console.log(currentPairs.concat([pair]));
-        // console.log('pairs excluding this pair: ');
-        // console.log(pairsExcludingThisPair);
-        // console.table(newPath);
-
         bestTrades = FindArb(pairsExcludingThisPair, tempOut, tokenOut, maxHops - 1, currentPairs.concat([pair]), newPath, bestTrades, count);
       }
     }
   }
-  // console.log('checkpoint #8');
+
   return bestTrades;
 }
