@@ -272,9 +272,12 @@ export function FindArb(pairs, tokenIn, tokenOut, maxHops, currentPairs, path, b
       // [Ea, Eb] = getEaEb(tokenOut, currentPairs + [pair]);
       [Ea, Eb] = getEaEb(tokenOut, currentPairs.concat([pair]));
       // Create a new trade object with the current path, currentPairs array plus the current pair, and Ea and Eb
+
       newTrade = {
+        "lpAddress": pair.address,
         "route": currentPairs + [pair],
         "path": newPath,
+        "pathString": newPath.reduce((accumulator, currentToken) => { return `${!!accumulator ? `${accumulator}, ` : ''}${currentToken.symbol}`; }, ''),
         "Ea": Ea,
         "Eb": Eb
       };
