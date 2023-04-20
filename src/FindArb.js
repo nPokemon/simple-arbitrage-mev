@@ -172,9 +172,8 @@ function sortTrades(trades, newTrade) {
   });
 }
 
-// convert market pair LPs from eth node into algo expected format
-
-// CONVERT:
+// Convert market pair LPs from eth node into algo expected format
+// FROM:
 // {
 //   "_marketAddress": "0x3926a168C11a816e10c13977f75F488BffFE88E4",
 //   "_tokens": [
@@ -192,7 +191,7 @@ function sortTrades(trades, newTrade) {
 //       "hex": "0x8051533cca360064"
 //     }
 //   }
-// },
+// }
 // INTO:
 // {
 //   "index": 0,
@@ -209,7 +208,8 @@ function sortTrades(trades, newTrade) {
 //   },
 //   "reserve0": 176560092727090,
 //   "reserve1": 5.2459530415773e+23
-// },
+// }
+
 export function convertLiquidityPool(lp, index) {
   const token0Address = lp._tokens[0];
   const token1Address = lp._tokens[1];
@@ -273,9 +273,23 @@ export function FindArb(pairs, tokenIn, tokenOut, maxHops, currentPairs, path, b
       [Ea, Eb] = getEaEb(tokenOut, currentPairs.concat([pair]));
       // Create a new trade object with the current path, currentPairs array plus the current pair, and Ea and Eb
 
+      const route = currentPairs.concat([pair]).map(obj => {
+        return {
+          ...obj,
+          index: obj.index,
+          address: obj.address,
+          reserve0: obj.reserve0,
+          reserve1: obj.reserve1,
+          token0Symbol: obj.token0.symbol,
+          token1Symbol: obj.token1.symbol,
+          priceToken0inToken1: (obj.reserve1 / obj.reserve0 * 10 ** (obj.token0.decimals - obj.token1.decimals)).toFixed(15),
+          priceToken1inToken0: (1 / (obj.reserve1 / obj.reserve0 * 10 ** (obj.token0.decimals - obj.token1.decimals))).toFixed(15),
+        };
+      });
+
       newTrade = {
-        "lpAddress": pair.address,
-        "route": currentPairs + [pair],
+        "lp": pair,
+        "route": route,
         "path": newPath,
         "pathString": newPath.reduce((accumulator, currentToken) => { return `${!!accumulator ? `${accumulator}, ` : ''}${currentToken.symbol}`; }, ''),
         "Ea": Ea,
@@ -294,7 +308,25 @@ export function FindArb(pairs, tokenIn, tokenOut, maxHops, currentPairs, path, b
           // Calculate the profit for the trade
           newTrade["profit"] = newTrade["outputAmount"] - newTrade["optimalAmount"];
           // Calculate the profit as a percentage of the output token
-          newTrade["p"] = Number.parseInt(newTrade["profit"]) / Math.pow(10, tokenOut["decimals"]);
+          newTrade["p"] = `${Number.parseInt(newTrade["profit"]) / Math.pow(10, tokenOut["decimals"])} ${tokenOut.symbol}`;
+
+          const oneWETHProfitStartingCapital = 1;
+          const oneWETHProfit = route.reduce((accumulator, routeNode) => {
+            // find which is WETH token; tokenFromNode1 = WETH token
+            if (routeNode.token0.symbol === accumulator.currentTokenSymbol) {
+              accumulator.capital = accumulator.capital * routeNode.priceToken0inToken1;
+              accumulator.currentTokenSymbol = routeNode.token1.symbol;
+              return accumulator;
+            }
+            if (routeNode.token1.symbol === accumulator.currentTokenSymbol) {
+              accumulator.capital = accumulator.capital * routeNode.priceToken1inToken0
+              accumulator.currentTokenSymbol = routeNode.token0.symbol;
+              return accumulator;
+            }
+          }, { currentTokenSymbol: 'WETH', capital: oneWETHProfitStartingCapital });
+          // newTrade["oneWETHProfit"] = `${oneWETHProfitStartingCapital - oneWETHProfit.capital} ${oneWETHProfit.currentTokenSymbol}`;
+          newTrade["oneWETHProfit"] = oneWETHProfitStartingCapital - oneWETHProfit.capital;
+
         } else {
           continue;
         }
@@ -311,5 +343,6 @@ export function FindArb(pairs, tokenIn, tokenOut, maxHops, currentPairs, path, b
     }
   }
 
-  return bestTrades;
+  return bestTrades.filter(trade => trade.oneWETHProfit > 0);
+  // return bestTrades;
 }

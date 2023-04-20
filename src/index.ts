@@ -95,7 +95,7 @@ async function main() {
         'symbol': wethDataObj.symbol,
         'decimals': wethDataObj.decimals,
       };
-      const maxHops = 5;
+      const maxHops = 7;
 
       // get list of all stable coins
       // filter pairs for only stable coins using list for new list of stablecoin pairs
@@ -133,7 +133,7 @@ async function main() {
       console.log('\x1b[32m%s\x1b[0m', '*************************');
       console.log('bestTrades: ')
       console.log(bestTrades);
-      bestTrades.map((trade: any) => console.table(trade.path));
+      bestTrades.map((trade: any) => console.table(trade.route));
     } catch (error) { 
       console.log('\x1b[31m%s\x1b[0m', '\n*************************');
       console.log('\x1b[31m%s\x1b[0m', '**        ERROR        **');
