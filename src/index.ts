@@ -64,7 +64,7 @@ async function main() {
   //   arbitrageSigningWallet,
   //   flashbotsProvider,
   //   new Contract(BUNDLE_EXECUTOR_ADDRESS, BUNDLE_EXECUTOR_ABI, provider) )
-  console.log('\nrunning main...\n');
+  console.log('\nfinding your paths ...\n');
   // console.log(stablecoinAddresses);
   // console.log(stablecoinAddressesData);
   let markets: GroupedMarkets;

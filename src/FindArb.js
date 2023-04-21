@@ -282,6 +282,8 @@ export function FindArb(pairs, tokenIn, tokenOut, maxHops, currentPairs, path, b
           reserve1: obj.reserve1,
           token0Symbol: obj.token0.symbol,
           token1Symbol: obj.token1.symbol,
+          // token0Address: obj.token0.address,
+          // token1Address: obj.token1.address,
           priceToken0inToken1: (obj.reserve1 / obj.reserve0 * 10 ** (obj.token0.decimals - obj.token1.decimals)).toFixed(15),
           priceToken1inToken0: (1 / (obj.reserve1 / obj.reserve0 * 10 ** (obj.token0.decimals - obj.token1.decimals))).toFixed(15),
         };
@@ -326,6 +328,7 @@ export function FindArb(pairs, tokenIn, tokenOut, maxHops, currentPairs, path, b
           }, { currentTokenSymbol: 'WETH', capital: oneWETHProfitStartingCapital });
           // newTrade["oneWETHProfit"] = `${oneWETHProfitStartingCapital - oneWETHProfit.capital} ${oneWETHProfit.currentTokenSymbol}`;
           newTrade["oneWETHProfit"] = oneWETHProfitStartingCapital - oneWETHProfit.capital;
+          newTrade["startingCapForTenBucks"] = `${1.005 / oneWETHProfit.capital} WETH`;
 
         } else {
           continue;
@@ -344,5 +347,4 @@ export function FindArb(pairs, tokenIn, tokenOut, maxHops, currentPairs, path, b
   }
 
   return bestTrades.filter(trade => trade.oneWETHProfit > 0);
-  // return bestTrades;
 }
