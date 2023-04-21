@@ -2,3 +2,5 @@
 /node_modules
 /build
 /tsconfig.tsbuildinfo
+ssh-keygen -t ed25519 -C \"alachkovics@gmail.com\"
+ssh-keygen -t ed25519 -C \"alachkovics@gmail.com\".pub
