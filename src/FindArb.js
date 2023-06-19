@@ -470,10 +470,161 @@ const formatAccumulatorRouteNode = (
               accumulator.currentTokenSymbol = routeNode.token0.symbol;
               return accumulator;
             }
+export function FindArbRoutesBigNumbers(pairs, tokenIn, tokenOut, maxHops, currentPairs, path, bestTrades, count = 5, minProfitUsdt, minProfitWeth) {
+  // Declare variables used in the function
+  let Ea, Eb, newPath, newTrade, pair, pairsExcludingThisPair, tempOut;
+
+  // console.log('*** FindArbRoutesBigNumbers:Pairs ***');
+  // console.log(pairs[0]);
+
+  // Loop through all pairs in the pairs array
+  for (let i = 0, _pj_a = pairs.length; i < _pj_a; i += 1) {
+    // Make a copy of the current path
+    newPath = path.slice();
+    // Get the current pair
+    pair = pairs[i];
+
+    let reserve0 = pair.originalLp._tokenBalances[pair.originalLp._tokens[0]];
+    let reserve1 = pair.originalLp._tokenBalances[pair.originalLp._tokens[1]];
+    let token0Decimals = BigNumber.from(pair["token0"]["decimals"]);
+    let token1Decimals = BigNumber.from(pair["token1"]["decimals"]);
+
+    // console.log('pair["token0"]: ');
+    // console.log(pair["token0"]);
+    console.log('pair: ');
+    console.log(pair);
+
+    // Check if the current pair contains the tokenIn as either token0 or token1
+    // console.log(`pair: ${JSON.stringify(pair, null, 2)}`);
+    if (!(pair["token0"]["address"].toLowerCase() === tokenIn["address"].toLowerCase()) && !(pair["token1"]["address"].toLowerCase() === tokenIn["address"].toLowerCase())) {
+      continue; // Skip to the next pair if tokenIn is not in the current pair
+    }
+    // Check if the reserves of either token0 or token1 in the current pair are less than 1
+    // if (pair["reserve0"] / Math.pow(10, pair["token0"]["decimals"]) < 1 || pair["reserve1"] / Math.pow(10, pair["token1"]["decimals"]) < 1) {
+    if (BigNumber.from(reserve0).div(BigNumber.from(10).pow(token0Decimals)).lt(1) || BigNumber.from(reserve1).div(BigNumber.from(10).pow(token1Decimals)).lt(1)) {
+      continue; // Skip to the next pair if either reserve is less than 14
+    }
+    // Determine which token in the current pair is the output token
+    if (tokenIn["address"].toLowerCase() === pair["token0"]["address"].toLowerCase()) {
+      tempOut = pair["token1"]; // If tokenIn is token0, then token1 is the output token
+    } else {
+      tempOut = pair["token0"]; // If tokenIn is token1, then token0 is the output token
+    }
+
+    // Add the output token to the path
+    newPath.push(tempOut);
+
+    // Check if the output token is the desired tokenOut and the path has more than 2 tokens
+    if (tempOut["address"].toLowerCase() === tokenOut["address"].toLowerCase() && path.length > 2) {
+      // Calculate Ea and Eb using the currentPairs array plus the current pair
+      // Ea represents the effective price of buying tokenOut, while Eb represents the effective price of selling tokenOut.
+      // [Ea, Eb] = getEaEb(tokenOut, currentPairs + [pair]);
+      [Ea, Eb] = getEaEb(tokenOut, currentPairs.concat([pair]));
+      // Create a new trade object with the current path, currentPairs array plus the current pair, and Ea and Eb
+
+      const route = currentPairs.concat([pair]).map(obj => {
+        return {
+          ...obj,
+          index: obj.index,
+          address: obj.address,
+          reserve0: obj.reserve0,
+          reserve1: obj.reserve1,
+          token0Symbol: obj.token0.symbol,
+          token1Symbol: obj.token1.symbol,
+          token0Address: obj.token0.address,
+          token1Address: obj.token1.address,
+          priceToken0inToken1: (obj.reserve1 / obj.reserve0 * 10 ** (obj.token0.decimals - obj.token1.decimals)).toFixed(15),
+          priceToken1inToken0: (1 / (obj.reserve1 / obj.reserve0 * 10 ** (obj.token0.decimals - obj.token1.decimals))).toFixed(15),
+        };
+      });
+
+      newTrade = {
+        "lp": pair,
+        "route": route,
+        "path": newPath,
+        "pathString": newPath.reduce((accumulator, currentToken) => { return `${!!accumulator ? `${accumulator}, ` : ''}${currentToken.symbol}`; }, ''),
+        "Ea": Ea,
+        "Eb": Eb
+      };
+
+      // Check if Ea and Eb are both defined and Ea is less than Eb
+      if (Ea && Eb && Ea < Eb) {
+        // Calculate the optimal amount of tokenOut for the trade
+        newTrade["optimalAmount"] = getOptimalAmount(Ea, Eb);
+
+        // Check if the optimal amount is greater than 0
+        if (newTrade["optimalAmount"] > 0) {
+          // Calculate the output amount for the trade
+          newTrade["outputAmount"] = getAmountOut(newTrade["optimalAmount"], Ea, Eb);
+          // Calculate the profit for the trade
+          newTrade["profit"] = newTrade["outputAmount"] - newTrade["optimalAmount"];
+          // Calculate the profit as a percentage of the output token
+          newTrade["p"] = `${Number.parseInt(newTrade["profit"]) / Math.pow(10, tokenOut["decimals"])} ${tokenOut.symbol}`;
+
+          const oneWETHProfitStartingCapital = 1;
+          const oneWETHProfit = route.reduce((accumulator, routeNode) => {
+            // find which is WETH token; tokenFromNode1 = WETH token
+            const { amount, symbolTo } = calculateRouteNodeCapital(
+              accumulator.capital,
+              accumulator.currentTokenSymbol,
+              routeNode.token0.symbol,
+              routeNode.token1.symbol,
+              routeNode.priceToken0inToken1,
+              routeNode.priceToken1inToken0
+            );
+            return { currentTokenSymbol: symbolTo, capital: amount };
           }, { currentTokenSymbol: 'WETH', capital: oneWETHProfitStartingCapital });
           // newTrade["oneWETHProfit"] = `${oneWETHProfitStartingCapital - oneWETHProfit.capital} ${oneWETHProfit.currentTokenSymbol}`;
           newTrade["oneWETHProfit"] = oneWETHProfitStartingCapital - oneWETHProfit.capital;
-          newTrade["startingCapForTenBucks"] = `${1.005 / oneWETHProfit.capital} WETH`;
+
+          const startingCapForSetProfit = (oneWETHProfitStartingCapital + minProfitWeth) / oneWETHProfit.capital;
+          newTrade[`startingCapFor${minProfitUsdt}BucksProfit`] = `${startingCapForSetProfit} WETH`;
+
+          // starting with startingCapFor.. input amount, loop through each route node to calculate the amount we're starting with for each node
+          // and add it to them to the route object node data
+          // newTrade["nodeAmounts"] = oneWETHProfit.nodeAmount;
+          const calculatedRoutes = newTrade["route"].reduce((accumulator, routeNode) => {
+            // find which is WETH token; tokenFromNode1 = WETH token
+            const { amount, symbolFrom, symbolTo } = calculateRouteNodeCapital(
+              accumulator.capital,
+              accumulator.currentTokenSymbol,
+              routeNode.token0.symbol,
+              routeNode.token1.symbol,
+              routeNode.priceToken0inToken1,
+              routeNode.priceToken1inToken0
+            );
+            if (symbolFrom === routeNode.token0.symbol) {
+              accumulator.route.push({
+                poolAddress: routeNode.address,
+                amountFrom: accumulator.capital,
+                amountTo: amount,
+                symbolFrom_token0: symbolFrom,
+                symbolTo_token1: routeNode.token1.symbol,
+                addressFrom: routeNode.token0.address,
+                addressTo: routeNode.token1.address,
+                reserve0: routeNode.reserve0,
+                reserve1: routeNode.reserve1,
+                priceToken0inToken1: routeNode.priceToken0inToken1,
+                priceToken1inToken0: routeNode.priceToken1inToken0
+              });
+            } else if (symbolFrom === routeNode.token1.symbol) {
+              accumulator.route.push({
+                poolAddress: routeNode.address,
+                amountFrom: accumulator.capital,
+                amountTo: amount,
+                symbolFrom_token1: symbolFrom,
+                symbolTo_token0: routeNode.token0.symbol,
+                addressFrom: routeNode.token1.address,
+                addressTo: routeNode.token0.address,
+                reserve0: routeNode.reserve0,
+                reserve1: routeNode.reserve1,
+                priceToken0inToken1: routeNode.priceToken0inToken1,
+                priceToken1inToken0: routeNode.priceToken1inToken0
+              });
+            }
+            return { currentTokenSymbol: symbolTo, capital: amount, route: accumulator.route };
+          }, { currentTokenSymbol: 'WETH', capital: startingCapForSetProfit, route: [] });
+          newTrade["calculatedRoutes"] = calculatedRoutes.route;
 
         } else {
           continue;
@@ -486,7 +637,7 @@ const formatAccumulatorRouteNode = (
     } else {
       if (maxHops > 1 && pairs.length > 1) {
         pairsExcludingThisPair = pairs.slice(0, i).concat(pairs.slice(i + 1));
-        bestTrades = FindArb(pairsExcludingThisPair, tempOut, tokenOut, maxHops - 1, currentPairs.concat([pair]), newPath, bestTrades, count);
+        bestTrades = FindArbRoutesBigNumbers(pairsExcludingThisPair, tempOut, tokenOut, maxHops - 1, currentPairs.concat([pair]), newPath, bestTrades, count, minProfitUsdt, minProfitWeth);
       }
     }
   }
