@@ -234,7 +234,22 @@ export function convertLiquidityPool(lp, index) {
   };
 }
 
-export function FindArb(pairs, tokenIn, tokenOut, maxHops, currentPairs, path, bestTrades, count = 5) {
+const calculateRouteNodeCapital = (
+  startingCapital,
+  currentSymbol,
+  token0Symbol,
+  token1Symbol,
+  priceToken0inToken1,
+  priceToken1inToken0
+) => {
+  if (token0Symbol === currentSymbol) {
+    return { amount: (startingCapital * priceToken0inToken1), symbolFrom: token0Symbol, symbolTo: token1Symbol };
+  }
+  if (token1Symbol === currentSymbol) {
+    return { amount: (startingCapital * priceToken1inToken0), symbolFrom: token1Symbol, symbolTo: token0Symbol };
+  }
+};
+
 const calculateGasOnRoute = async (route, gasPrice, provider) => {
   const poolAddress = route.poolAddress.toLowerCase();
   const addressFrom = route.addressFrom.toLowerCase();
