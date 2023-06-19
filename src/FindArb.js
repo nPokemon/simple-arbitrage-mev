@@ -286,6 +286,34 @@ const calculateGasOnRoute = async (route, gasPrice, provider) => {
   //   gas: gasCost,
   // };
 };
+const formatAccumulatorRouteNode = (
+  poolAddress,
+  tokenIn,
+  tokenOut,
+  amountIn,
+  amountOut,
+  reserveIn,
+  reserveOut
+) => {
+  return {
+    tokenIn: tokenIn.address,          // Address of the token being sold
+    tokenOut: tokenOut.address,         // Address of the token being bought
+    tokenInSymbol: tokenIn.symbol,          // Address of the token being sold
+    tokenOutSymbol: tokenOut.symbol,         // Address of the token being bought
+    amountIn: amountIn, // Amount of tokenIn to be sold
+    amountOut: amountOut,   // Expected amount of tokenOut to be received
+    markets: [
+      {
+        tokenA: tokenIn.address,       // Address of tokenA in the market
+        tokenB: tokenOut.address,       // Address of tokenB in the market
+        pairAddress: poolAddress,  // Address of the Uniswap V2 pair contract
+        reserveA: BigNumber.from(reserveIn), // Reserve of tokenA in the market
+        reserveB: BigNumber.from(reserveOut),   // Reserve of tokenB in the market
+        uniswapV2: true           // Indicates it is a Uniswap V2 market
+      }
+    ]
+  };
+}
   // Declare variables used in the function
   let Ea, Eb, newPath, newTrade, pair, pairsExcludingThisPair, tempOut;
 
