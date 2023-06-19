@@ -286,6 +286,72 @@ const calculateGasOnRoute = async (route, gasPrice, provider) => {
   //   gas: gasCost,
   // };
 };
+
+export async function getArbPaths(
+  pairs,
+  tokenIn,
+  tokenOut,
+  maxHops,
+  currentPairs,
+  path,
+  bestTrades,
+  count = 5,
+  minProfitUsdt,
+  minProfitWeth,
+  gasPrice,
+  provider
+) {
+  // const arbRoutes = await FindArbRoutes(pairs, tokenIn, tokenOut, maxHops, currentPairs, path, bestTrades, count, minProfitUsdt, minProfitWeth);
+  const arbRoutes = await FindArbRoutesBigNumbers(pairs, tokenIn, tokenOut, maxHops, currentPairs, path, bestTrades, count, minProfitUsdt, minProfitWeth);
+
+  // const testGasCost = await calculateGasOnRoute({
+  //   // poolAddress: '0x397FF1542f962076d0BFE58eA045FfA2d347ACa0',
+  //   poolAddress: '0xB4e16d0168e52d35CaCD2c6185b44281Ec28C9Dc',
+  //   addressFrom: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
+  //   addressTo: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
+  //   amountFrom: 10.006187978818492,
+  //   amountTo: 18270.676194306485,
+  //   provider
+  // },
+  //   gasPrice);
+  // console.log(`\n************************************ ...`);
+  // console.log(`*** gas cost: ${testGasCost} *** ...`);
+  // console.log(`************************************ ...\n`);
+
+  const addFeesToRoute = async (route) => {
+    const updatedRoute = {
+      ...route,
+      fees: 0
+    };
+    // simulate an asynchronous operation
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    return updatedRoute;
+  };
+  // DEBUG: PRIMARY CONSOLE DUMP
+  // console.log(arbRoutes);
+  return Promise.all(arbRoutes.map(async (trade) => {
+    return {
+      ...trade,
+      // calculatedRoutes: await Promise.all(trade.calculatedRoutes.map(route => addFeesToRoute(route)))
+      calculatedRoutes: trade.calculatedRoutes
+    };
+  }));
+  // return Promise.all(arbRoutes.map(async (trade) => {
+  //   const calculatedRoutes = await Promise.all(trade.calculatedRoutes.map(async route => await addFeesToRoute(route)));
+  //   return {
+  //     ...trade,
+  //     calculatedRoutes
+  //   };
+  // }));
+
+  // return Promise.all(arbRoutes.map(async (trade) => {
+  //   return {
+  //     ...trade,
+  //     calculatedRoutes: await Promise.all(trade.calculatedRoutes.map(route => calculateGasOnRoute(route, gasPrice)))
+  //   };
+  // }));
+}
+
 const formatAccumulatorRouteNode = (
   poolAddress,
   tokenIn,
