@@ -235,6 +235,42 @@ export function convertLiquidityPool(lp, index) {
 }
 
 export function FindArb(pairs, tokenIn, tokenOut, maxHops, currentPairs, path, bestTrades, count = 5) {
+const calculateGasOnRoute = async (route, gasPrice, provider) => {
+  const poolAddress = route.poolAddress.toLowerCase();
+  const addressFrom = route.addressFrom.toLowerCase();
+  const addressTo = route.addressTo.toLowerCase();
+  // console.log(route);
+  console.log('checkpoint #0');
+  // console.log(provider);
+  // console.log(poolAddress);
+  // console.log(UNISWAP_PAIR_ABI);
+  const pool = new Contract(poolAddress, UNISWAP_PAIR_ABI, provider);
+  // console.log('pool contract: ');
+  // console.log(pool);
+  console.log('checkpoint #1');
+  const tokenA = new Contract(addressFrom, ERC20_ABI, provider);
+  console.log('checkpoint #2');
+  const tokenB = new Contract(addressTo, ERC20_ABI, provider);
+  console.log('checkpoint #3');
+  const tokenFromDecimals = allTokens[addressFrom].decimals;
+  console.log('checkpoint #4');
+  const tokenToDecimals = allTokens[addressTo].decimals;
+  const amountA = utils.parseUnits(route.amountFrom, tokenFromDecimals);
+  const amountB = utils.parseUnits(route.amountTo, tokenToDecimals);
+
+  const tokenAOut = await pool.getAmountsOut(amountA, [addressFrom, addressTo]);
+  const tokenBOut = await pool.getAmountsOut(amountB, [addressTo, addressFrom]);
+
+  const gasEstimateA = await pool.estimateGas.swapExactTokensForTokens(amountA, tokenAOut[1], [addressFrom, addressTo], gasPrice, { gasLimit });
+  const gasEstimateB = await pool.estimateGas.swapExactTokensForTokens(amountB, tokenBOut[1], [addressTo, addressFrom], gasPrice, { gasLimit });
+
+  const gasCost = utils.formatEther(gasEstimateA.add(gasEstimateB).mul(gasPrice));
+  return gasCost;
+  // return {
+  //   ...route,
+  //   gas: gasCost,
+  // };
+};
   // Declare variables used in the function
   let Ea, Eb, newPath, newTrade, pair, pairsExcludingThisPair, tempOut;
 
