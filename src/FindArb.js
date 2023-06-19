@@ -1,13 +1,21 @@
 const Decimal = require('decimal.js');
 import { wethData, stablecoinAddressesData } from './data/stablecoinsdata';
+import { ERC20_ABI, UNISWAP_PAIR_ABI } from "./abi";
+import { BigNumber, Contract, providers, utils } from "ethers";
+import { ALCHEMY_RPC_URL, UNISWAP_PAIR_ABI } from './constants.js';
 
 var _pj;
 const d997 = new Decimal(997);
 const d1000 = new Decimal(1000);
+const bn997 = BigNumber.from(997);
+const bn1000 = BigNumber.from(1000);
 const allTokens = {
   ...wethData,
   ...stablecoinAddressesData
 };
+// const ETHEREUM_RPC_URL = process.env.ETHEREUM_RPC_URL || ALCHEMY_RPC_URL;
+// const provider = new providers.StaticJsonRpcProvider(ETHEREUM_RPC_URL);
+const gasLimit = 150000;
 
 function _pj_snippets(container) {
   function _assert(comp, msg) {
