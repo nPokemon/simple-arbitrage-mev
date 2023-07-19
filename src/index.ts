@@ -55,10 +55,34 @@ const HEALTHCHECK_URL = process.env.HEALTHCHECK_URL || ""
 const provider = new providers.StaticJsonRpcProvider(ETHEREUM_RPC_URL);
 const stablecoinAddresses = stablecoinsList.map(stablecoinAddress => stablecoinAddress.address);
 const uniswapRouter = new Contract(UNISWAP_ROUTER_ADDRESS, UNISWAP_ROUTER_ABI, provider);
+
 let marketCheckIteration = 1;
 
 // const arbitrageSigningWallet = new Wallet(PRIVATE_KEY);
 // const flashbotsRelaySigningWallet = new Wallet(FLASHBOTS_RELAY_SIGNING_KEY);
+
+async function printChainId() {
+  // Compare the chain ID to known testnet IDs
+  const currentChainId = await provider.getNetwork().then((network) => network.chainId);
+  const chainIdColorReset = '\x1b[0m';
+  const chainIdColorRed = '\x1b[31m';
+  const chainIdColorGreen = '\x1b[32m';
+  const chainIdColorYellow = '\x1b[33m';
+
+  if (currentChainId.toString() === '1') {
+    console.log(chainIdColorRed, `[Running on Mainnet id=${currentChainId.toString()}]`, chainIdColorReset);
+  } else if (currentChainId.toString() === '3') {
+    console.log(chainIdColorYellow, `[Running on Ropsten Testnet id=${currentChainId.toString()}]`, chainIdColorReset);
+  } else if (currentChainId.toString() === '4') {
+    console.log(chainIdColorYellow, `[Running on Rinkeby Testnet id=${currentChainId.toString()}]`, chainIdColorReset);
+  } else if (currentChainId.toString() === '42') {
+    console.log(chainIdColorYellow, `[Running on Kovan Testnet id=${currentChainId.toString()}]`, chainIdColorReset);
+  } else if (currentChainId.toString() === '5') {
+    console.log(chainIdColorGreen, `[Running on Goerli Testnet id=${currentChainId.toString()}]`, chainIdColorReset);
+  } else {
+    console.log(`Running on an unknown network with chainId ${currentChainId.toString()}`);
+  }
+}
 
 function healthcheck() {
   if (HEALTHCHECK_URL === "") {
