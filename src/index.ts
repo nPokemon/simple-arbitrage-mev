@@ -97,46 +97,6 @@ const getUsdtToWethPrice = async (usdtAmount: number) => {
   return formattedAmountOut;
 };
 
-// const calculateGasOnRoute = async (poolAddress: string, addressFrom: string, addressTo: string, amountFrom: string, amountTo: string, gasPrice: string) => {
-//   const gasLimit = 150000;
-//   const amountFromNumber = parseFloat(amountFrom);
-//   const amountToNumber = parseFloat(amountTo);
-//   console.log('checkpoint #0');
-//   const pool = new Contract(poolAddress, UNISWAP_ROUTER_ABI, provider);
-//   console.log('checkpoint #3');
-//   const tokenFromDecimals = allTokens[addressFrom.toLowerCase()].decimals;
-//   console.log('tokenFromDecimals: ', tokenFromDecimals);
-//   console.log('checkpoint #4');
-//   const tokenToDecimals = allTokens[addressTo.toLowerCase()].decimals;
-//   const amountFromFixed = amountFromNumber.toFixed(tokenFromDecimals);
-//   const amountToixed = amountToNumber.toFixed(tokenToDecimals);
-//   console.log('checkpoint #5');
-//   console.log('amountFrom: ', amountFrom);
-//   console.log('typeof amountFrom: ', typeof amountFrom);
-//   const amountA = utils.parseUnits(amountFromFixed, tokenFromDecimals);
-//   console.log('checkpoint #6');
-//   const amountB = utils.parseUnits(amountToixed, tokenToDecimals);
-//   console.log('checkpoint #7 --');
-  
-//   console.log('pool:');
-//   console.log(pool);
-//   console.log('amountA: ', amountA);
-//   console.log('addressFrom: ', addressFrom);
-//   console.log('addressTo: ', addressTo);
-
-//   const tokenAOut = await pool.getAmountsOut(amountA, [addressFrom, addressTo]);
-//   console.log('checkpoint #8');
-//   const tokenBOut = await pool.getAmountsOut(amountB, [addressTo, addressFrom]);
-//   console.log('checkpoint #9');
-  
-//   const gasEstimateA = await pool.estimateGas.swapExactTokensForTokens(amountA, tokenAOut[1], [addressFrom, addressTo], gasPrice, { gasLimit });
-//   console.log('checkpoint #10');
-//   const gasEstimateB = await pool.estimateGas.swapExactTokensForTokens(amountB, tokenBOut[1], [addressTo, addressFrom], gasPrice, { gasLimit });
-
-//   const gasCost = utils.formatEther(gasEstimateA.add(gasEstimateB).mul(gasPrice));
-//   return gasCost;
-// };
-
 async function estimateGasLimitForTokenSwap(
   poolAddress: string,
   tokenInAddress: string,
