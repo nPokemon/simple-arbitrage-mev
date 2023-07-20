@@ -10,14 +10,14 @@ import stablecoinsList from './data/stablecoins.json';
 import { wethData, stablecoinAddressesData, StablecoinAddresses } from './data/stablecoinsdata';
 import { buildStablecoinDataFile } from './buildStablesFile';
 import { performance } from 'perf_hooks';
-import { ALCHEMY_RPC_URL, UNISWAP_ROUTER_ADDRESS } from './constants.js';
-import dotenv from 'dotenv';
 import { ChainId, Fetcher, WETH, Route, Trade, TokenAmount, TradeType, Percent } from '@uniswap/sdk';
+require("dotenv").config();
 
 const pairs = require('./data/pairs.json');
 const { FindArbRoutes, convertLiquidityPool, getArbPaths } = require('./FindArb.js');
 const chainId = ChainId.MAINNET;
-dotenv.config({ path: '../../.env' });
+const ALCHEMY_RPC_URL: string = process.env.ALCHEMY_RPC_URL_MAINNET || '';
+const UNISWAP_ROUTER_ADDRESS: string = process.env.UNISWAP_ROUTER_ADDRESS || '';
 
 // const ETHEREUM_RPC_URL = process.env.ETHEREUM_RPC_URL || "http://127.0.0.1:8545"
 // const ETHEREUM_RPC_URL = process.env.ETHEREUM_RPC_URL || "https://eth-goerli.g.alchemy.com/v2/2I4tGEHZgeRbdF0TyOKx-c9H_824BAJk"
@@ -83,6 +83,7 @@ async function printChainId() {
   } else {
     console.log(`Running on an unknown network with ${chainIdStr}`);
   }
+  console.log('\n');
 }
 
 function healthcheck() {
@@ -209,7 +210,7 @@ async function main() {
   //   flashbotsProvider,
   //   new Contract(BUNDLE_EXECUTOR_ADDRESS, BUNDLE_EXECUTOR_ABI, provider) )
   console.log('\nfinding your paths ...\n');
-  
+
   let markets: GroupedMarkets;
   const minProfitUsdt = 5;
   const minProfitWeth = await getUsdtToWethPrice(minProfitUsdt);

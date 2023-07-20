@@ -3,7 +3,6 @@ import { wethData, stablecoinAddressesData } from './data/stablecoinsdata';
 import { ERC20_ABI, UNISWAP_PAIR_ABI } from "./abi";
 import { Contract, providers, utils } from "ethers";
 import BigNumber from "bignumber.js";
-import { ALCHEMY_RPC_URL, UNISWAP_PAIR_ABI } from './constants.js';
 
 var _pj;
 const d997 = new Decimal(997);
