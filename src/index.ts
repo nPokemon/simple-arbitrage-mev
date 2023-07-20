@@ -68,20 +68,23 @@ let marketCheckIteration = 1;
 async function printChainId() {
   // Compare the chain ID to known testnet IDs
   const currentChainId = await provider.getNetwork().then((network) => network.chainId);
-  const chainIdStr = `chainId=${currentChainId.toString()}`;
+  const chainIdStr = `chainId(${currentChainId.toString()})`;
 
-  if (currentChainId.toString() === '1') {
-    console.log(consoleColourRed, `[Running on Mainnet ${chainIdStr}]`, consoleColourReset);
+
+  if (!process.env.TEST_MODE && currentChainId.toString() === '1') {
+    console.log(consoleColourRed, `\n[ Running on Mainnet ${chainIdStr} ]`, consoleColourReset);
+  } else if (process.env.TEST_MODE && currentChainId.toString() === '1') {
+    console.log(consoleColourGreen, `\n[ Running local dev environment on Mainnet ${chainIdStr} ]`, consoleColourReset);
   } else if (currentChainId.toString() === '3') {
-    console.log(consoleColourYellow, `[Running on Ropsten Testnet ${chainIdStr}]`, consoleColourReset);
+    console.log(consoleColourYellow, `\n[ Running on Ropsten Testnet ${chainIdStr} ]`, consoleColourReset);
   } else if (currentChainId.toString() === '4') {
-    console.log(consoleColourYellow, `[Running on Rinkeby Testnet ${chainIdStr}]`, consoleColourReset);
+    console.log(consoleColourYellow, `\n[ Running on Rinkeby Testnet ${chainIdStr} ]`, consoleColourReset);
   } else if (currentChainId.toString() === '42') {
-    console.log(consoleColourYellow, `[Running on Kovan Testnet ${chainIdStr}]`, consoleColourReset);
+    console.log(consoleColourYellow, `\n[ Running on Kovan Testnet ${chainIdStr} ]`, consoleColourReset);
   } else if (currentChainId.toString() === '5') {
-    console.log(consoleColourGreen, `[Running on Goerli Testnet ${chainIdStr}]`, consoleColourReset);
+    console.log(consoleColourYellow, `\n[ Running on Goerli Testnet ${chainIdStr} ]`, consoleColourReset);
   } else {
-    console.log(`Running on an unknown network with ${chainIdStr}`);
+    console.log(`\n[ Running on an unknown network with ${chainIdStr} `);
   }
   console.log('\n');
 }
