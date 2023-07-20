@@ -28,6 +28,10 @@ const allTokens = {
   ...wethData,
   ...stablecoinAddressesData
 };
+const consoleColourReset = '\x1b[0m';
+const consoleColourRed = '\x1b[31m';
+const consoleColourGreen = '\x1b[32m';
+const consoleColourYellow = '\x1b[33m';
 
 const uniswapRouterAddress: string = process.env.UNISWAP_ROUTER_ADDRESS || '';
 
@@ -64,23 +68,20 @@ let marketCheckIteration = 1;
 async function printChainId() {
   // Compare the chain ID to known testnet IDs
   const currentChainId = await provider.getNetwork().then((network) => network.chainId);
-  const chainIdColorReset = '\x1b[0m';
-  const chainIdColorRed = '\x1b[31m';
-  const chainIdColorGreen = '\x1b[32m';
-  const chainIdColorYellow = '\x1b[33m';
+  const chainIdStr = `chainId=${currentChainId.toString()}`;
 
   if (currentChainId.toString() === '1') {
-    console.log(chainIdColorRed, `[Running on Mainnet id=${currentChainId.toString()}]`, chainIdColorReset);
+    console.log(consoleColourRed, `[Running on Mainnet ${chainIdStr}]`, consoleColourReset);
   } else if (currentChainId.toString() === '3') {
-    console.log(chainIdColorYellow, `[Running on Ropsten Testnet id=${currentChainId.toString()}]`, chainIdColorReset);
+    console.log(consoleColourYellow, `[Running on Ropsten Testnet ${chainIdStr}]`, consoleColourReset);
   } else if (currentChainId.toString() === '4') {
-    console.log(chainIdColorYellow, `[Running on Rinkeby Testnet id=${currentChainId.toString()}]`, chainIdColorReset);
+    console.log(consoleColourYellow, `[Running on Rinkeby Testnet ${chainIdStr}]`, consoleColourReset);
   } else if (currentChainId.toString() === '42') {
-    console.log(chainIdColorYellow, `[Running on Kovan Testnet id=${currentChainId.toString()}]`, chainIdColorReset);
+    console.log(consoleColourYellow, `[Running on Kovan Testnet ${chainIdStr}]`, consoleColourReset);
   } else if (currentChainId.toString() === '5') {
-    console.log(chainIdColorGreen, `[Running on Goerli Testnet id=${currentChainId.toString()}]`, chainIdColorReset);
+    console.log(consoleColourGreen, `[Running on Goerli Testnet ${chainIdStr}]`, consoleColourReset);
   } else {
-    console.log(`Running on an unknown network with chainId ${currentChainId.toString()}`);
+    console.log(`Running on an unknown network with ${chainIdStr}`);
   }
 }
 
@@ -197,6 +198,8 @@ console.log('gasPrice: ', gasPrice);
   return gasLimit.toString();
 }
 
+printChainId();
+
 async function main() {
   // console.log("Searcher Wallet Address: " + await arbitrageSigningWallet.getAddress())
   // console.log("Flashbots Relay Signing Wallet Address: " + await flashbotsRelaySigningWallet.getAddress())
@@ -206,6 +209,7 @@ async function main() {
   //   flashbotsProvider,
   //   new Contract(BUNDLE_EXECUTOR_ADDRESS, BUNDLE_EXECUTOR_ABI, provider) )
   console.log('\nfinding your paths ...\n');
+  
   let markets: GroupedMarkets;
   const minProfitUsdt = 5;
   const minProfitWeth = await getUsdtToWethPrice(minProfitUsdt);
@@ -231,6 +235,8 @@ async function main() {
   // console.log(`\n************************************ ...`);
   // console.log(`*** gas cost: ${testGasCost} *** ...`);
   // console.log(`************************************ ...\n`);
+
+  
 
   provider.on('block', async (blockNumber) => {
     try {
