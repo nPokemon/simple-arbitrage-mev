@@ -18,9 +18,6 @@ const { FindArbRoutes, convertLiquidityPool, getArbPaths } = require('./FindArb.
 const chainId = ChainId.MAINNET;
 const ALCHEMY_RPC_URL: string = process.env.ALCHEMY_RPC_URL_MAINNET || '';
 const UNISWAP_ROUTER_ADDRESS: string = process.env.UNISWAP_ROUTER_ADDRESS || '';
-
-// const ETHEREUM_RPC_URL = process.env.ETHEREUM_RPC_URL || "http://127.0.0.1:8545"
-// const ETHEREUM_RPC_URL = process.env.ETHEREUM_RPC_URL || "https://eth-goerli.g.alchemy.com/v2/2I4tGEHZgeRbdF0TyOKx-c9H_824BAJk"
 const ETHEREUM_RPC_URL = process.env.ETHEREUM_RPC_URL || ALCHEMY_RPC_URL;
 const PRIVATE_KEY = process.env.PRIVATE_KEY || "";
 const BUNDLE_EXECUTOR_ADDRESS = process.env.BUNDLE_EXECUTOR_ADDRESS || "";
@@ -151,20 +148,6 @@ async function main() {
   } catch (error) {
     console.error(`\nError retrieving Uniswap markets...\n`);
   }
-
-  // const testGasCost = await estimateGasLimitForTokenSwap(
-  //   '0xB4e16d0168e52d35CaCD2c6185b44281Ec28C9Dc',
-  //   '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
-  //   '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
-  //   "10.079778468325394",
-  //   "18710.131703823405",
-  //   utils.formatEther(gasPrice)
-  // );
-  // console.log(`\n************************************ ...`);
-  // console.log(`*** gas cost: ${testGasCost} *** ...`);
-  // console.log(`************************************ ...\n`);
-
-  
 
   provider.on('block', async (blockNumber) => {
     try {
