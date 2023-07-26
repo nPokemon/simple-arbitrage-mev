@@ -11,6 +11,7 @@ import { wethData, stablecoinAddressesData, StablecoinAddresses } from './data/s
 import { buildStablecoinDataFile } from './buildStablesFile';
 import { performance } from 'perf_hooks';
 import { ChainId, Fetcher, WETH, Route, Trade, TokenAmount, TradeType, Percent } from '@uniswap/sdk';
+import { exit } from "process";
 
 require("dotenv").config();
 const fs = require('fs');
@@ -31,6 +32,7 @@ const consoleColourReset = '\x1b[0m';
 const consoleColourRed = '\x1b[31m';
 const consoleColourGreen = '\x1b[32m';
 const consoleColourYellow = '\x1b[33m';
+const isTestNet = process.env.TEST_MODE === 'true';
 
 const uniswapRouterAddress: string = process.env.UNISWAP_ROUTER_ADDRESS || '';
 
@@ -54,8 +56,14 @@ const uniswapRouterAddress: string = process.env.UNISWAP_ROUTER_ADDRESS || '';
 //   process.exit(1)
 // }
 
+let provider: providers.WebSocketProvider | providers.StaticJsonRpcProvider;
+if (isTestNet) {
+  provider = new hre.ethers.providers.WebSocketProvider(`ws://127.0.0.1:8545/`);
+} else {
+  provider = new providers.StaticJsonRpcProvider(ETHEREUM_RPC_URL);
+}
+// const provider = new providers.StaticJsonRpcProvider(ETHEREUM_RPC_URL);
 const HEALTHCHECK_URL = process.env.HEALTHCHECK_URL || ""
-const provider = new providers.StaticJsonRpcProvider(ETHEREUM_RPC_URL);
 const stablecoinAddresses = stablecoinsList.map(stablecoinAddress => stablecoinAddress.address);
 const uniswapRouter = new Contract(UNISWAP_ROUTER_ADDRESS, UNISWAP_ROUTER_ABI, provider);
 
@@ -69,11 +77,12 @@ async function printChainId() {
   const currentChainId = await provider.getNetwork().then((network) => network.chainId);
   const chainIdStr = `chainId(${currentChainId.toString()})`;
 
-
-  if (!process.env.TEST_MODE && currentChainId.toString() === '1') {
+  if (!isTestNet && currentChainId.toString() === '1') {
     console.log(consoleColourRed, `\n[ Running on Mainnet ${chainIdStr} ]`, consoleColourReset);
-  } else if (process.env.TEST_MODE && currentChainId.toString() === '1') {
+  } else if (isTestNet && currentChainId.toString() === '1') {
     console.log(consoleColourGreen, `\n[ Running local dev environment on Mainnet ${chainIdStr} ]`, consoleColourReset);
+  } else if (isTestNet && currentChainId.toString() === '31337') {
+    console.log(consoleColourGreen, `\n[ Running local dev environment on ${chainIdStr} ]`, consoleColourReset);
   } else if (currentChainId.toString() === '3') {
     console.log(consoleColourYellow, `\n[ Running on Ropsten Testnet ${chainIdStr} ]`, consoleColourReset);
   } else if (currentChainId.toString() === '4') {
@@ -83,7 +92,7 @@ async function printChainId() {
   } else if (currentChainId.toString() === '5') {
     console.log(consoleColourYellow, `\n[ Running on Goerli Testnet ${chainIdStr} ]`, consoleColourReset);
   } else {
-    console.log(`\n[ Running on an unknown network with ${chainIdStr} `);
+    console.log(consoleColourYellow, `\n[ Running on an unknown network with ${chainIdStr} ]`, consoleColourReset);
   }
   console.log('\n');
 }
@@ -93,6 +102,23 @@ function healthcheck() {
     return
   }
   get(HEALTHCHECK_URL).on('error', console.error);
+}
+
+async function saveTradesWithBigNumbers(bestTrades: any) {
+  // Custom replacer function for JSON.stringify
+  const bigNumberReplacer = (key: string, value: any) => {
+    if (BigNumber.isBigNumber(value)) {
+      // Convert BigNumber to its original string representation
+      return value.toString();
+    }
+    return value; // For other types, return as is
+  };
+  
+  // Convert the array of objects to a JSON string with custom replacer
+  const jsonString = JSON.stringify(bestTrades, bigNumberReplacer, 2);
+  
+  // Write the JSON string to the file
+  fs.writeFileSync('last-best-trades.json', jsonString);
 }
 
 // build stablecoin data file
@@ -126,6 +152,17 @@ const getUsdtToWethPrice = async (usdtAmount: number) => {
 };
 
 printChainId();
+
+if (isTestNet) {
+  // Read the contents of the file
+  const rawData = fs.readFileSync('last-best-trades.json', 'utf-8');
+  // Parse the JSON data into an array object
+  const bestTrades = JSON.parse(rawData);
+  bestTrades.map((trade: any) => console.table(trade.route));
+
+  console.log('\nexiting testnet ..\n');
+  exit();
+}
 
 async function main() {
   // console.log("Searcher Wallet Address: " + await arbitrageSigningWallet.getAddress())
@@ -213,11 +250,13 @@ async function main() {
       } else {
         console.log(`\nThe asynchronous call took ${totalTimeFindArb.toFixed(2)} seconds to complete.\n`);
       }
+      saveTradesWithBigNumbers(bestTrades);
 
       console.log('\x1b[32m%s\x1b[0m', '\n*************************');
       console.log('\x1b[32m%s\x1b[0m', '**       SUCCESS       **');
       console.log('\x1b[32m%s\x1b[0m', '*************************');
-      console.log('bestTrades: ')
+
+      console.log('bestTrades: ');
       console.log(bestTrades);
       bestTrades.map((trade: any) => console.table(trade.route));
       // DEBUG: PRIMARY CONSOLE DUMP
