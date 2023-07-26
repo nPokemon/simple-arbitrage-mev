@@ -11,8 +11,10 @@ import { wethData, stablecoinAddressesData, StablecoinAddresses } from './data/s
 import { buildStablecoinDataFile } from './buildStablesFile';
 import { performance } from 'perf_hooks';
 import { ChainId, Fetcher, WETH, Route, Trade, TokenAmount, TradeType, Percent } from '@uniswap/sdk';
-require("dotenv").config();
 
+require("dotenv").config();
+const fs = require('fs');
+const hre = require("hardhat");
 const pairs = require('./data/pairs.json');
 const { FindArbRoutes, convertLiquidityPool, getArbPaths } = require('./FindArb.js');
 const chainId = ChainId.MAINNET;
