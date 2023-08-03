@@ -90,7 +90,6 @@ export class Arbitrage {
     )
   }
 
-
   async evaluateMarkets(marketsByToken: MarketsByToken): Promise<Array<CrossedMarketDetails>> {
     const bestCrossedMarkets = new Array<CrossedMarketDetails>()
 

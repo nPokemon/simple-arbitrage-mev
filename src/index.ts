@@ -2,7 +2,8 @@
 import { Contract, providers, utils, Wallet, BigNumber } from "ethers";
 import { BUNDLE_EXECUTOR_ABI, UNISWAP_ROUTER_ABI, UNISWAP_PAIR_ABI, ERC20_ABI } from "./abi";
 import { UniswappyV2EthPair, GroupedMarkets } from "./UniswappyV2EthPair";
-import { FACTORY_ADDRESSES } from "./addresses";
+import { FACTORY_ADDRESSES, WETH_ADDRESS, USDT_ADDRESS } from "./addresses";
+import { MIN_PROFIT_USDT, IS_TEST_MODE, IS_BIGNUMBER_MODE } from "./config";
 // import { Arbitrage } from "./Arbitrage";
 import { get } from "https"
 import { getDefaultRelaySigningKey } from "./utils";
@@ -13,11 +14,14 @@ import { performance } from 'perf_hooks';
 import { ChainId, Fetcher, WETH, Route, Trade, TokenAmount, TradeType, Percent } from '@uniswap/sdk';
 import { exit } from "process";
 
+const { convertLiquidityPool, getArbPathsDecimals } = require('./FindArb.js');
+const { getArbPathsBigNumbers } = require('./FindArbBigNumbers.js');
+const getArbPaths = IS_BIGNUMBER_MODE ? getArbPathsBigNumbers : getArbPathsDecimals;
+
 require("dotenv").config();
 const fs = require('fs');
 const hre = require("hardhat");
 const pairs = require('./data/pairs.json');
-const { FindArbRoutes, convertLiquidityPool, getArbPaths } = require('./FindArb.js');
 const chainId = ChainId.MAINNET;
 const ALCHEMY_RPC_URL: string = process.env.ALCHEMY_RPC_URL_MAINNET || '';
 const UNISWAP_ROUTER_ADDRESS: string = process.env.UNISWAP_ROUTER_ADDRESS || '';
@@ -32,7 +36,6 @@ const consoleColourReset = '\x1b[0m';
 const consoleColourRed = '\x1b[31m';
 const consoleColourGreen = '\x1b[32m';
 const consoleColourYellow = '\x1b[33m';
-const isTestNet = process.env.TEST_MODE === 'true';
 
 const uniswapRouterAddress: string = process.env.UNISWAP_ROUTER_ADDRESS || '';
 
@@ -57,7 +60,7 @@ const uniswapRouterAddress: string = process.env.UNISWAP_ROUTER_ADDRESS || '';
 // }
 
 let provider: providers.WebSocketProvider | providers.StaticJsonRpcProvider;
-if (isTestNet) {
+if (IS_TEST_MODE) {
   provider = new hre.ethers.providers.WebSocketProvider(`ws://127.0.0.1:8545/`);
 } else {
   provider = new providers.StaticJsonRpcProvider(ETHEREUM_RPC_URL);
@@ -77,11 +80,11 @@ async function printChainId() {
   const currentChainId = await provider.getNetwork().then((network) => network.chainId);
   const chainIdStr = `chainId(${currentChainId.toString()})`;
 
-  if (!isTestNet && currentChainId.toString() === '1') {
+  if (!IS_TEST_MODE && currentChainId.toString() === '1') {
     console.log(consoleColourRed, `\n[ Running on Mainnet ${chainIdStr} ]`, consoleColourReset);
-  } else if (isTestNet && currentChainId.toString() === '1') {
+  } else if (IS_TEST_MODE && currentChainId.toString() === '1') {
     console.log(consoleColourGreen, `\n[ Running local dev environment on Mainnet ${chainIdStr} ]`, consoleColourReset);
-  } else if (isTestNet && currentChainId.toString() === '31337') {
+  } else if (IS_TEST_MODE && currentChainId.toString() === '31337') {
     console.log(consoleColourGreen, `\n[ Running local dev environment on ${chainIdStr} ]`, consoleColourReset);
   } else if (currentChainId.toString() === '3') {
     console.log(consoleColourYellow, `\n[ Running on Ropsten Testnet ${chainIdStr} ]`, consoleColourReset);
@@ -137,8 +140,6 @@ async function getGasPrice() {
 }
 
 const getUsdtToWethPrice = async (usdtAmount: number) => {
-  const WETH_ADDRESS = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2";
-  const USDT_ADDRESS = "0xdac17f958d2ee523a2206206994597c13d831ec7";
   const usdt = new Contract(USDT_ADDRESS, ['function decimals() view returns (uint8)'], provider);
   const usdtDecimals = await usdt.decimals();
   const weth = new Contract(WETH_ADDRESS, ['function decimals() view returns (uint8)'], provider);
@@ -153,7 +154,7 @@ const getUsdtToWethPrice = async (usdtAmount: number) => {
 
 printChainId();
 
-if (isTestNet) {
+if (IS_TEST_MODE) {
   // Read the contents of the file
   const rawData = fs.readFileSync('last-best-trades.json', 'utf-8');
   // Parse the JSON data into an array object
@@ -175,11 +176,10 @@ async function main() {
   console.log('\nfinding your paths ...\n');
 
   let markets: GroupedMarkets;
-  const minProfitUsdt = 5;
-  const minProfitWeth = await getUsdtToWethPrice(minProfitUsdt);
+  const minProfitWeth = await getUsdtToWethPrice(MIN_PROFIT_USDT);
   const gasPrice = await getGasPrice();
 
-  console.log(`${minProfitUsdt} USDT = ${minProfitWeth} WETH`);
+  console.log(`${MIN_PROFIT_USDT} USDT = ${minProfitWeth} WETH`);
   console.log(`Gas Price: ${utils.formatEther(gasPrice)} ETH`);
 
   try {
@@ -238,8 +238,8 @@ async function main() {
       // console.log((convertedFilteredMarketPairs[0] as { originalLp: any })['originalLp']);
       
       let startFindArb = performance.now();
-      const bestTrades = await getArbPaths(convertedFilteredMarketPairs, tokenIn, tokenOut, maxHops, [], [tokenIn], [], 5, minProfitUsdt, minProfitWeth, gasPrice, provider);
-      // let bestTrades = await FindArbRoutes(convertedFilteredMarketPairs, tokenIn, tokenOut, maxHops, [], [tokenIn], [], 5, minProfitUsdt, minProfitWeth);
+      const bestTrades = await getArbPaths(convertedFilteredMarketPairs, tokenIn, tokenOut, maxHops, [], [tokenIn], [], 5, MIN_PROFIT_USDT, minProfitWeth, gasPrice, provider);
+      // let bestTrades = await FindArbRoutes(convertedFilteredMarketPairs, tokenIn, tokenOut, maxHops, [], [tokenIn], [], 5, MIN_PROFIT_USDT, minProfitWeth);
       // let bestTrades = await FindArbRoutes(pairs, tokenIn, tokenOut, maxHops, [], [tokenIn], [], 5);
       let finishFindArb = performance.now();
       const totalTimeFindArb = (finishFindArb - startFindArb) / 1000;
@@ -250,7 +250,9 @@ async function main() {
       } else {
         console.log(`\nThe asynchronous call took ${totalTimeFindArb.toFixed(2)} seconds to complete.\n`);
       }
-      saveTradesWithBigNumbers(bestTrades);
+      if (IS_BIGNUMBER_MODE) {
+        saveTradesWithBigNumbers(bestTrades);
+      }
 
       console.log('\x1b[32m%s\x1b[0m', '\n*************************');
       console.log('\x1b[32m%s\x1b[0m', '**       SUCCESS       **');
