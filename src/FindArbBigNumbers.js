@@ -324,23 +324,11 @@ export async function getArbPathsBigNumbers(
   gasPrice,
   provider
 ) {
-  // const arbRoutes = await FindArbRoutes(pairs, tokenIn, tokenOut, maxHops, currentPairs, path, bestTrades, count, minProfitUsdt, minProfitWeth);
+  console.log('\x1b[38;5;207m%s\x1b[0m', '\n*************************');
+  console.log('\x1b[38;5;207m%s\x1b[0m', `  getArbPathsBigNumbers    `);
+  console.log('\x1b[38;5;207m%s\x1b[0m', '*************************\n');
+
   const arbRoutes = await FindArbRoutesBigNumbers(pairs, tokenIn, tokenOut, maxHops, currentPairs, path, bestTrades, count, minProfitUsdt, minProfitWeth);
-
-  // const testGasCost = await calculateGasOnRoute({
-  //   // poolAddress: '0x397FF1542f962076d0BFE58eA045FfA2d347ACa0',
-  //   poolAddress: '0xB4e16d0168e52d35CaCD2c6185b44281Ec28C9Dc',
-  //   addressFrom: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
-  //   addressTo: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
-  //   amountFrom: 10.006187978818492,
-  //   amountTo: 18270.676194306485,
-  //   provider
-  // },
-  //   gasPrice);
-  // console.log(`\n************************************ ...`);
-  // console.log(`*** gas cost: ${testGasCost} *** ...`);
-  // console.log(`************************************ ...\n`);
-
   const addFeesToRoute = async (route) => {
     const updatedRoute = {
       ...route,
@@ -385,27 +373,26 @@ const formatAccumulatorRouteNode = (
   reserveOut
 ) => {
   return {
-    tokenIn: tokenIn.address,          // Address of the token being sold
-    tokenOut: tokenOut.address,         // Address of the token being bought
-    tokenInSymbol: tokenIn.symbol,          // Address of the token being sold
-    tokenOutSymbol: tokenOut.symbol,         // Address of the token being bought
-    amountIn: amountIn, // Amount of tokenIn to be sold
-    amountOut: amountOut,   // Expected amount of tokenOut to be received
+    tokenIn: tokenIn.address,                 // Address of the token being sold
+    tokenOut: tokenOut.address,               // Address of the token being bought
+    tokenInSymbol: tokenIn.symbol,            // Address of the token being sold
+    tokenOutSymbol: tokenOut.symbol,          // Address of the token being bought
+    amountIn: amountIn,                       // Amount of tokenIn to be sold
+    amountOut: amountOut,                     // Expected amount of tokenOut to be received
     markets: [
       {
-        tokenA: tokenIn.address,       // Address of tokenA in the market
-        tokenB: tokenOut.address,       // Address of tokenB in the market
-        pairAddress: poolAddress,  // Address of the Uniswap V2 pair contract
-        reserveA: new BigNumber(reserveIn), // Reserve of tokenA in the market
-        reserveB: new BigNumber(reserveOut),   // Reserve of tokenB in the market
-        uniswapV2: true           // Indicates it is a Uniswap V2 market
+        tokenA: tokenIn.address,              // Address of tokenA in the market
+        tokenB: tokenOut.address,             // Address of tokenB in the market
+        pairAddress: poolAddress,             // Address of the Uniswap V2 pair contract
+        reserveA: new BigNumber(reserveIn),   // Reserve of tokenA in the market
+        reserveB: new BigNumber(reserveOut),  // Reserve of tokenB in the market
+        uniswapV2: true                       // Indicates it is a Uniswap V2 market
       }
     ]
   };
 }
 
 export function FindArbRoutesBigNumbers(pairs, tokenIn, tokenOut, maxHops, currentPairs, path, bestTrades, count = 5, minProfitUsdt, minProfitWeth) {
-
   const wethDecimals = Object.values(wethData)[0].decimals;
   const zeroBn = new BigNumber(0);
   const oneBn = new BigNumber(1);
@@ -422,10 +409,8 @@ export function FindArbRoutesBigNumbers(pairs, tokenIn, tokenOut, maxHops, curre
     // Get the current pair
     pair = pairs[i];
 
-    let reserve0 = pair.originalLp._tokenBalances[pair.originalLp._tokens[0]];
-    let reserve1 = pair.originalLp._tokenBalances[pair.originalLp._tokens[1]];
-    let reserve0Bn = new BigNumber(reserve0);
-    let reserve1Bn = new BigNumber(reserve1);
+    let reserve0Bn = new BigNumber((pair.originalLp._tokenBalances[pair.originalLp._tokens[0]]).toString());
+    let reserve1Bn = new BigNumber((pair.originalLp._tokenBalances[pair.originalLp._tokens[1]]).toString());
     let token0Decimals = new BigNumber(pair["token0"]["decimals"]);
     let token1Decimals = new BigNumber(pair["token1"]["decimals"]);
 
@@ -434,7 +419,7 @@ export function FindArbRoutesBigNumbers(pairs, tokenIn, tokenOut, maxHops, curre
       continue; // Skip to the next pair if tokenIn is not in the current pair
     }
     // Check if the reserves of either token0 or token1 in the current pair are less than 1
-    if (reserve0Bn.div(tenBn.pow(token0Decimals)).lt(1) || reserve1Bn.div(tenBn.pow(token1Decimals)).lt(1)) {
+    if (reserve0Bn.div(tenBn.pow(token0Decimals)).lt(oneBn) || reserve1Bn.div(tenBn.pow(token1Decimals)).lt(oneBn)) {
       continue; // Skip to the next pair if either reserve is less than 14
     }
     // Determine which token in the current pair is the output token
@@ -453,7 +438,6 @@ export function FindArbRoutesBigNumbers(pairs, tokenIn, tokenOut, maxHops, curre
       // Ea represents the effective price of buying tokenOut, while Eb represents the effective price of selling tokenOut.
       [Ea, Eb] = getEaEb(tokenOut, currentPairs.concat([pair]));
       // Create a new trade object with the current path, currentPairs array plus the current pair, and Ea and Eb
-
       const route = currentPairs.concat([pair]).map(obj => {
         let reserve0Bn = new BigNumber((obj.originalLp._tokenBalances[obj.originalLp._tokens[0]]).toString());
         let reserve1Bn = new BigNumber((obj.originalLp._tokenBalances[obj.originalLp._tokens[1]]).toString());
@@ -504,6 +488,7 @@ export function FindArbRoutesBigNumbers(pairs, tokenIn, tokenOut, maxHops, curre
           newTrade["optimalAmountReadable"] = newTrade["optimalAmount"].toString();
           newTrade["outputAmount"] = getAmountOut(newTrade["optimalAmount"], Ea, Eb);
           newTrade["outputAmountReadable"] = newTrade["optimalAmount"].toString();
+
           // Calculate the profit for the trade
           newTrade["profit"] = newTrade["outputAmount"].minus(newTrade["optimalAmount"]);
           newTrade["profit"] = newTrade["outputAmount"].minus(newTrade["optimalAmount"]);
@@ -527,8 +512,6 @@ export function FindArbRoutesBigNumbers(pairs, tokenIn, tokenOut, maxHops, curre
           }, { currentTokenSymbol: 'WETH', capital: oneWETHProfitStartingCapital });
           // newTrade["oneWETHProfit"] = `${oneWETHProfitStartingCapital - oneWETHProfit.capital} ${oneWETHProfit.currentTokenSymbol}`;
           newTrade["oneWETHProfit"] = oneWETHProfitStartingCapital.minus(oneWETHProfit.capital);
-          // console.log('newTrade["oneWETHProfit"]: ', newTrade["oneWETHProfit"].toString());
-          console.table(oneWETHProfit);
 
           const startingCapForSetProfit = oneWETHProfitStartingCapital.plus(minProfitWethBn).div(oneWETHProfit.capital);
           newTrade[`startingCapFor${minProfitUsdt}BucksProfit`] = `${startingCapForSetProfit.toString()} WETH`;
