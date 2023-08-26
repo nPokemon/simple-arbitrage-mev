@@ -178,9 +178,15 @@ async function main() {
   let markets: GroupedMarkets;
   const minProfitWeth = await getUsdtToWethPrice(MIN_PROFIT_USDT);
   const gasPrice = await getGasPrice();
+  const numberMode = IS_BIGNUMBER_MODE ? 'BIG NUMBERS' : 'DECIMALS';
 
   console.log(`${MIN_PROFIT_USDT} USDT = ${minProfitWeth} WETH`);
   console.log(`Gas Price: ${utils.formatEther(gasPrice)} ETH`);
+
+  
+  console.log('\x1b[38;5;207m%s\x1b[0m', '\n*************************');
+  console.log('\x1b[38;5;207m%s\x1b[0m', `       ${numberMode}       `);
+  console.log('\x1b[38;5;207m%s\x1b[0m', '*************************\n');
 
   try {
     markets = await UniswappyV2EthPair.getUniswapMarketsByToken(provider, FACTORY_ADDRESSES);
@@ -234,6 +240,7 @@ async function main() {
 
       const convertedFilteredMarketPairs = filteredMarketPairs.map(convertLiquidityPool);
 
+      console.log(`convertedFilteredMarketPairs length: ${convertedFilteredMarketPairs.length}\n`);
       // console.log('*** convertedFilteredMarketPairs ***');
       // console.log((convertedFilteredMarketPairs[0] as { originalLp: any })['originalLp']);
       
@@ -256,7 +263,7 @@ async function main() {
 
       console.log('\x1b[32m%s\x1b[0m', '\n*************************');
       console.log('\x1b[32m%s\x1b[0m', '**       SUCCESS       **');
-      console.log('\x1b[32m%s\x1b[0m', '*************************');
+      console.log('\x1b[32m%s\x1b[0m', '*************************\n');
 
       console.log('bestTrades: ');
       console.log(bestTrades);
@@ -266,7 +273,7 @@ async function main() {
     } catch (error) { 
       console.log('\x1b[31m%s\x1b[0m', '\n*************************');
       console.log('\x1b[31m%s\x1b[0m', '**        ERROR        **');
-      console.log('\x1b[31m%s\x1b[0m', '*************************');
+      console.log('\x1b[31m%s\x1b[0m', '*************************\n');
       console.error(`\nError during updateReserves ...\n`);
       console.error(`error: ${(error as any)}\n`);
       console.error(`trying again ...\n`);
