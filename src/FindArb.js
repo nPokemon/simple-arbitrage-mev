@@ -16,17 +16,17 @@ const allTokens = {
 // const ETHEREUM_RPC_URL = process.env.ETHEREUM_RPC_URL || ALCHEMY_RPC_URL;
 // const provider = new providers.StaticJsonRpcProvider(ETHEREUM_RPC_URL);
 const gasLimit = 150000;
-const TEST_VOLUMES = [
-  ETHER.div(100),
-  ETHER.div(10),
-  ETHER.div(6),
-  ETHER.div(4),
-  ETHER.div(2),
-  ETHER.div(1),
-  ETHER.mul(2),
-  ETHER.mul(5),
-  ETHER.mul(10),
-];
+// const TEST_VOLUMES = [
+//   ETHER.div(100),
+//   ETHER.div(10),
+//   ETHER.div(6),
+//   ETHER.div(4),
+//   ETHER.div(2),
+//   ETHER.div(1),
+//   ETHER.mul(2),
+//   ETHER.mul(5),
+//   ETHER.mul(10),
+// ];
 
 function _pj_snippets(container) {
   function _assert(comp, msg) {
@@ -314,23 +314,11 @@ export async function getArbPathsDecimals(
   gasPrice,
   provider
 ) {
+  console.log('\x1b[38;5;207m%s\x1b[0m', '\n*************************');
+  console.log('\x1b[38;5;207m%s\x1b[0m', `   getArbPathsDecimals     `);
+  console.log('\x1b[38;5;207m%s\x1b[0m', '*************************\n');
+
   const arbRoutes = await FindArbRoutes(pairs, tokenIn, tokenOut, maxHops, currentPairs, path, bestTrades, count, minProfitUsdt, minProfitWeth);
-  // const arbRoutes = await FindArbRoutesBigNumbers(pairs, tokenIn, tokenOut, maxHops, currentPairs, path, bestTrades, count, minProfitUsdt, minProfitWeth);
-
-  // const testGasCost = await calculateGasOnRoute({
-  //   // poolAddress: '0x397FF1542f962076d0BFE58eA045FfA2d347ACa0',
-  //   poolAddress: '0xB4e16d0168e52d35CaCD2c6185b44281Ec28C9Dc',
-  //   addressFrom: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
-  //   addressTo: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
-  //   amountFrom: 10.006187978818492,
-  //   amountTo: 18270.676194306485,
-  //   provider
-  // },
-  //   gasPrice);
-  // console.log(`\n************************************ ...`);
-  // console.log(`*** gas cost: ${testGasCost} *** ...`);
-  // console.log(`************************************ ...\n`);
-
   const addFeesToRoute = async (route) => {
     const updatedRoute = {
       ...route,
@@ -413,7 +401,6 @@ export function FindArbRoutes(pairs, tokenIn, tokenOut, maxHops, currentPairs, p
     pair = pairs[i];
 
     // Check if the current pair contains the tokenIn as either token0 or token1
-    // console.log(`pair: ${JSON.stringify(pair, null, 2)}`);
     if (!(pair["token0"]["address"].toLowerCase() === tokenIn["address"].toLowerCase()) && !(pair["token1"]["address"].toLowerCase() === tokenIn["address"].toLowerCase())) {
       continue; // Skip to the next pair if tokenIn is not in the current pair
     }
@@ -422,6 +409,7 @@ export function FindArbRoutes(pairs, tokenIn, tokenOut, maxHops, currentPairs, p
     if (pair["reserve0"] / Math.pow(10, pair["token0"]["decimals"]) < 1 || pair["reserve1"] / Math.pow(10, pair["token1"]["decimals"]) < 1) {
       continue; // Skip to the next pair if either reserve is less than 14
     }
+
     // Determine which token in the current pair is the output token
     if (tokenIn["address"].toLowerCase() === pair["token0"]["address"].toLowerCase()) {
       tempOut = pair["token1"]; // If tokenIn is token0, then token1 is the output token
@@ -436,10 +424,9 @@ export function FindArbRoutes(pairs, tokenIn, tokenOut, maxHops, currentPairs, p
     if (tempOut["address"].toLowerCase() === tokenOut["address"].toLowerCase() && path.length > 2) {
       // Calculate Ea and Eb using the currentPairs array plus the current pair
       // Ea represents the effective price of buying tokenOut, while Eb represents the effective price of selling tokenOut.
-      // [Ea, Eb] = getEaEb(tokenOut, currentPairs + [pair]);
       [Ea, Eb] = getEaEb(tokenOut, currentPairs.concat([pair]));
-      // Create a new trade object with the current path, currentPairs array plus the current pair, and Ea and Eb
 
+      // Create a new trade object with the current path, currentPairs array plus the current pair, and Ea and Eb
       const route = currentPairs.concat([pair]).map(obj => {
         return {
           ...obj,
@@ -474,8 +461,10 @@ export function FindArbRoutes(pairs, tokenIn, tokenOut, maxHops, currentPairs, p
         if (newTrade["optimalAmount"] > 0) {
           // Calculate the output amount for the trade
           newTrade["outputAmount"] = getAmountOut(newTrade["optimalAmount"], Ea, Eb);
+
           // Calculate the profit for the trade
           newTrade["profit"] = newTrade["outputAmount"] - newTrade["optimalAmount"];
+
           // Calculate the profit as a percentage of the output token
           newTrade["p"] = `${Number.parseInt(newTrade["profit"]) / Math.pow(10, tokenOut["decimals"])} ${tokenOut.symbol}`;
 
