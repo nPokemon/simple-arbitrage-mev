@@ -58,7 +58,7 @@ _pj = {};
 
 _pj_snippets(_pj);
 
-function getOptimalAmount(Ea, Eb) {
+export function getOptimalAmount(Ea, Eb) {
   if (Ea > Eb) {
     return null;
   }
@@ -82,7 +82,7 @@ function toInt(n) {
   return new Decimal(Number.parseInt(n));
 }
 
-function getAmountOut(amountIn, reserveIn, reserveOut) {
+export function getAmountOut(amountIn, reserveIn, reserveOut) {
   _pj._assert(amountIn > 0, null);
 
   _pj._assert(reserveIn > 0 && reserveOut > 0, null);
@@ -115,7 +115,7 @@ function getAmountOut(amountIn, reserveIn, reserveOut) {
 // reserve values of the tokens in the pairs. These adjusted reserve values are used to calculate the values of Ea and Eb.
 // 
 // The function returns an array containing the values of Ea and Eb.
-function getEaEb(tokenIn, pairs) {
+export function getEaEb(tokenIn, pairs) {
   var Ea, Eb, Ra, Rb, Rb1, Rc, idx, temp, tokenOut;
   Ea = null;
   Eb = null;
@@ -267,14 +267,8 @@ const calculateGasOnRoute = async (route, gasPrice, provider) => {
   const poolAddress = route.poolAddress.toLowerCase();
   const addressFrom = route.addressFrom.toLowerCase();
   const addressTo = route.addressTo.toLowerCase();
-  // console.log(route);
   console.log('checkpoint #0');
-  // console.log(provider);
-  // console.log(poolAddress);
-  // console.log(UNISWAP_PAIR_ABI);
   const pool = new Contract(poolAddress, UNISWAP_PAIR_ABI, provider);
-  // console.log('pool contract: ');
-  // console.log(pool);
   console.log('checkpoint #1');
   const tokenA = new Contract(addressFrom, ERC20_ABI, provider);
   console.log('checkpoint #2');
@@ -294,10 +288,6 @@ const calculateGasOnRoute = async (route, gasPrice, provider) => {
 
   const gasCost = utils.formatEther(gasEstimateA.add(gasEstimateB).mul(gasPrice));
   return gasCost;
-  // return {
-  //   ...route,
-  //   gas: gasCost,
-  // };
 };
 
 export async function getArbPathsDecimals(
@@ -363,20 +353,20 @@ const formatAccumulatorRouteNode = (
   reserveOut
 ) => {
   return {
-    tokenIn: tokenIn.address,          // Address of the token being sold
-    tokenOut: tokenOut.address,         // Address of the token being bought
-    tokenInSymbol: tokenIn.symbol,          // Address of the token being sold
-    tokenOutSymbol: tokenOut.symbol,         // Address of the token being bought
-    amountIn: amountIn, // Amount of tokenIn to be sold
-    amountOut: amountOut,   // Expected amount of tokenOut to be received
+    tokenIn: tokenIn.address,                 // Address of the token being sold
+    tokenOut: tokenOut.address,               // Address of the token being bought
+    tokenInSymbol: tokenIn.symbol,            // Address of the token being sold
+    tokenOutSymbol: tokenOut.symbol,          // Address of the token being bought
+    amountIn: amountIn,                       // Amount of tokenIn to be sold
+    amountOut: amountOut,                     // Expected amount of tokenOut to be received
     markets: [
       {
-        tokenA: tokenIn.address,       // Address of tokenA in the market
-        tokenB: tokenOut.address,       // Address of tokenB in the market
-        pairAddress: poolAddress,  // Address of the Uniswap V2 pair contract
-        reserveA: new BigNumber(reserveIn), // Reserve of tokenA in the market
-        reserveB: new BigNumber(reserveOut),   // Reserve of tokenB in the market
-        uniswapV2: true           // Indicates it is a Uniswap V2 market
+        tokenA: tokenIn.address,              // Address of tokenA in the market
+        tokenB: tokenOut.address,             // Address of tokenB in the market
+        pairAddress: poolAddress,             // Address of the Uniswap V2 pair contract
+        reserveA: new BigNumber(reserveIn),   // Reserve of tokenA in the market
+        reserveB: new BigNumber(reserveOut),  // Reserve of tokenB in the market
+        uniswapV2: true                       // Indicates it is a Uniswap V2 market
       }
     ]
   };
