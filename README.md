@@ -31,6 +31,15 @@ $ PRIVATE_KEY=__PRIVATE_KEY_FROM_ABOVE__ \
 My Usage
 ======================
 
+
+- this step on a new install
+```
+npm install
+npm update
+```
+
+then:
+
 ```
 npm run build
 ```
