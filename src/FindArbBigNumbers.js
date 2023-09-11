@@ -58,7 +58,7 @@ _pj = {};
 
 _pj_snippets(_pj);
 
-function getOptimalAmount(Ea, Eb) {
+export function getOptimalAmount(Ea, Eb) {
   if (Ea.gt(Eb)) {
     return null;
   }
@@ -82,7 +82,7 @@ function toInt(n) {
   return new Decimal(Number.parseInt(n));
 }
 
-function getAmountOut(amountIn, reserveIn, reserveOut) {
+export function getAmountOut(amountIn, reserveIn, reserveOut) {
   _pj._assert(amountIn.gt(0), null);
   _pj._assert(reserveIn.gt(0) && reserveOut.gt(0), null);
 
@@ -114,7 +114,7 @@ function getAmountOut(amountIn, reserveIn, reserveOut) {
 // reserve values of the tokens in the pairs. These adjusted reserve values are used to calculate the values of Ea and Eb.
 // 
 // The function returns an array containing the values of Ea and Eb.
-function getEaEb(tokenIn, pairs) {
+export function getEaEb(tokenIn, pairs) {
   var Ea, Eb, Ra, Rb, Rb1, Rc, idx, temp, tokenOut;
   Ea = null;
   Eb = null;
@@ -137,8 +137,12 @@ function getEaEb(tokenIn, pairs) {
     }
 
     if (idx === 1) {
-      Ra = adjustReserve(pairs[0]["token0"], reserve0);
-      Rb = adjustReserve(pairs[0]["token1"], reserve1);
+      let reserve0OriginalPrev = pairs[0].originalLp._tokenBalances[pairs[0].originalLp._tokens[0]];
+      let reserve1OriginalPrev = pairs[0].originalLp._tokenBalances[pairs[0].originalLp._tokens[1]];
+      let reserve0Prev = new BigNumber(reserve0OriginalPrev.toString());
+      let reserve1Prev = new BigNumber(reserve1OriginalPrev.toString());
+      Ra = adjustReserve(pairs[0]["token0"], reserve0Prev);
+      Rb = adjustReserve(pairs[0]["token1"], reserve1Prev);
 
       if (tokenIn["address"] === pairs[0]["token1"]["address"]) {
         temp = Ra;
