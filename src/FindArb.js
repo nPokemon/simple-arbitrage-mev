@@ -9,6 +9,7 @@ const d997 = new Decimal(997);
 const d1000 = new Decimal(1000);
 const bn997 = new BigNumber(997);
 const bn1000 = new BigNumber(1000);
+const DECIMAL_DEBUG_MODE = 0;
 const allTokens = {
   ...wethData,
   ...stablecoinAddressesData
@@ -74,7 +75,7 @@ export function getOptimalAmount(Ea, Eb) {
   return new Decimal(Number.parseInt((Decimal.sqrt(Ea * Eb * d997 * d1000) - Ea * d1000) / d997));
 }
 
-function adjustReserve(token, amount) {
+export function adjustReserve(token, amount) {
   return amount;
 }
 
@@ -181,7 +182,7 @@ export function getEaEb(tokenIn, pairs) {
     idx += 1;
   }
 
-  return [Ea, Eb];
+  return [parseInt(Ea), parseInt(Eb)];
 }
 
 // Convert market pair LPs from eth node into algo expected format
@@ -379,7 +380,18 @@ function sortTrades(trades, newTrade) {
   });
 }
 
-export function FindArbRoutes(pairs, tokenIn, tokenOut, maxHops, currentPairs, path, bestTrades, count = 5, minProfitUsdt, minProfitWeth) {
+export function FindArbRoutes(
+  pairs,
+  tokenIn,
+  tokenOut,
+  maxHops,
+  currentPairs,
+  path,
+  bestTrades,
+  count = 5,
+  minProfitUsdt,
+  minProfitWeth,
+) {
   // Declare variables used in the function
   let Ea, Eb, newPath, newTrade, pair, pairsExcludingThisPair, tempOut;
 
@@ -396,7 +408,7 @@ export function FindArbRoutes(pairs, tokenIn, tokenOut, maxHops, currentPairs, p
     }
 
     // Check if the reserves of either token0 or token1 in the current pair are less than 1
-    if (pair["reserve0"] / Math.pow(10, pair["token0"]["decimals"]) < 1 || pair["reserve1"] / Math.pow(10, pair["token1"]["decimals"]) < 1) {
+    if ((pair["reserve0"] / Math.pow(10, pair["token0"]["decimals"])) < 1 || (pair["reserve1"] / Math.pow(10, pair["token1"]["decimals"])) < 1) {
       continue; // Skip to the next pair if either reserve is less than 14
     }
 
@@ -410,11 +422,29 @@ export function FindArbRoutes(pairs, tokenIn, tokenOut, maxHops, currentPairs, p
     // Add the output token to the path
     newPath.push(tempOut);
 
+    if (DECIMAL_DEBUG_MODE) {
+      console.log('*** PAIR ***');
+      console.table(currentPairs.concat([pair]));
+    }
+
     // Check if the output token is the desired tokenOut and the path has more than 2 tokens
     if (tempOut["address"].toLowerCase() === tokenOut["address"].toLowerCase() && path.length > 2) {
       // Calculate Ea and Eb using the currentPairs array plus the current pair
       // Ea represents the effective price of buying tokenOut, while Eb represents the effective price of selling tokenOut.
       [Ea, Eb] = getEaEb(tokenOut, currentPairs.concat([pair]));
+
+      if (DECIMAL_DEBUG_MODE) {
+        console.log('\x1b[32m%s\x1b[0m', '\n*************************');
+        console.log('\x1b[32m%s\x1b[0m', '       condition pass        ');
+        console.log('\x1b[32m%s\x1b[0m', '*************************\n');
+
+        // console.log('*** PAIR ***');
+        // console.table(currentPairs.concat([pair]));
+        console.table({
+          Ea: Ea.toString(),
+          Eb: Eb.toString(),
+        });
+      }
 
       // Create a new trade object with the current path, currentPairs array plus the current pair, and Ea and Eb
       const route = currentPairs.concat([pair]).map(obj => {
@@ -433,6 +463,17 @@ export function FindArbRoutes(pairs, tokenIn, tokenOut, maxHops, currentPairs, p
         };
       });
 
+      if (DECIMAL_DEBUG_MODE) {
+        console.table({
+          "lp": pair,
+          "route": route,
+          "path": newPath,
+          "pathString": newPath.reduce((accumulator, currentToken) => { return `${!!accumulator ? `${accumulator}, ` : ''}${currentToken.symbol}`; }, ''),
+          "Ea": Ea,
+          "Eb": Eb
+        });
+      }
+
       newTrade = {
         "lp": pair,
         "route": route,
@@ -444,6 +485,11 @@ export function FindArbRoutes(pairs, tokenIn, tokenOut, maxHops, currentPairs, p
 
       // Check if Ea and Eb are both defined and Ea is less than Eb
       if (Ea && Eb && Ea < Eb) {
+
+        if (DECIMAL_DEBUG_MODE) {
+          console.log('CONDITION: (Ea && Eb && Ea < Eb)');
+        }
+
         // Calculate the optimal amount of tokenOut for the trade
         newTrade["optimalAmount"] = getOptimalAmount(Ea, Eb);
 
@@ -480,6 +526,12 @@ export function FindArbRoutes(pairs, tokenIn, tokenOut, maxHops, currentPairs, p
           // starting with startingCapFor.. input amount, loop through each route node to calculate the amount we're starting with for each node
           // and add it to them to the route object node data
           // newTrade["nodeAmounts"] = oneWETHProfit.nodeAmount;
+
+          if (DECIMAL_DEBUG_MODE) {
+            console.log('*** newTrade["route"] ***');
+            console.log(newTrade["route"]);
+          }
+
           const calculatedRoutes = newTrade["route"].reduce((accumulator, routeNode) => {
             // find which is WETH token; tokenFromNode1 = WETH token
             const { amount, symbolFrom, symbolTo } = calculateRouteNodeCapital(
@@ -491,6 +543,22 @@ export function FindArbRoutes(pairs, tokenIn, tokenOut, maxHops, currentPairs, p
               routeNode.priceToken1inToken0
             );
             if (symbolFrom === routeNode.token0.symbol) {
+              if (DECIMAL_DEBUG_MODE) {
+                console.log('*** #1 (symbolFrom === routeNode.token0.symbol) ***');
+                console.table({
+                  poolAddress: routeNode.address,
+                  amountFrom: accumulator.capital,
+                  amountTo: amount,
+                  symbolFrom_token0: symbolFrom,
+                  symbolTo_token1: routeNode.token1.symbol,
+                  addressFrom: routeNode.token0.address,
+                  addressTo: routeNode.token1.address,
+                  reserve0: routeNode.reserve0,
+                  reserve1: routeNode.reserve1,
+                  priceToken0inToken1: routeNode.priceToken0inToken1,
+                  priceToken1inToken0: routeNode.priceToken1inToken0
+                });
+              }
               accumulator.route.push({
                 poolAddress: routeNode.address,
                 amountFrom: accumulator.capital,
@@ -505,6 +573,22 @@ export function FindArbRoutes(pairs, tokenIn, tokenOut, maxHops, currentPairs, p
                 priceToken1inToken0: routeNode.priceToken1inToken0
               });
             } else if (symbolFrom === routeNode.token1.symbol) {
+              if (DECIMAL_DEBUG_MODE) {
+                console.log('*** #2 (symbolFrom === routeNode.token1.symbol) ***');
+                console.table({
+                  poolAddress: routeNode.address,
+                  amountFrom: accumulator.capital,
+                  amountTo: amount,
+                  symbolFrom_token1: symbolFrom,
+                  symbolTo_token0: routeNode.token0.symbol,
+                  addressFrom: routeNode.token1.address,
+                  addressTo: routeNode.token0.address,
+                  reserve0: routeNode.reserve0,
+                  reserve1: routeNode.reserve1,
+                  priceToken0inToken1: routeNode.priceToken0inToken1,
+                  priceToken1inToken0: routeNode.priceToken1inToken0
+                });
+              }
               accumulator.route.push({
                 poolAddress: routeNode.address,
                 amountFrom: accumulator.capital,
@@ -521,17 +605,35 @@ export function FindArbRoutes(pairs, tokenIn, tokenOut, maxHops, currentPairs, p
             }
             return { currentTokenSymbol: symbolTo, capital: amount, route: accumulator.route };
           }, { currentTokenSymbol: 'WETH', capital: startingCapForSetProfit, route: [] });
+          if (DECIMAL_DEBUG_MODE) {
+            console.log('*** #3 calculated routes ***');
+            console.log(calculatedRoutes.route);
+          }
           newTrade["calculatedRoutes"] = calculatedRoutes.route;
-
         } else {
           continue;
         }
 
+        if (DECIMAL_DEBUG_MODE) {
+          console.log('\nchecking best trades before sort: '); console.table(bestTrades);
+          console.table(newTrade["calculatedRoutes"]);
+        }
         bestTrades = sortTrades(bestTrades, newTrade);
         bestTrades.reverse();
         bestTrades = bestTrades.slice(0, count);
+
+        if (DECIMAL_DEBUG_MODE) {
+          console.log('\nchecking best trades after sort: '); console.table(bestTrades);
+          console.log('\nbestTrades: '); console.log(bestTrades["calculatedRoutes"]);
+        }
+
       }
     } else {
+      if (DECIMAL_DEBUG_MODE) {
+        console.log('\x1b[31m%s\x1b[0m', '\n*************************');
+        console.log('\x1b[31m%s\x1b[0m', '      condition fail        ');
+        console.log('\x1b[31m%s\x1b[0m', '*************************\n');
+      }
       if (maxHops > 1 && pairs.length > 1) {
         pairsExcludingThisPair = pairs.slice(0, i).concat(pairs.slice(i + 1));
         bestTrades = FindArbRoutes(pairsExcludingThisPair, tempOut, tokenOut, maxHops - 1, currentPairs.concat([pair]), newPath, bestTrades, count, minProfitUsdt, minProfitWeth);
@@ -539,6 +641,6 @@ export function FindArbRoutes(pairs, tokenIn, tokenOut, maxHops, currentPairs, p
     }
   }
 
-  return bestTrades.filter(trade => trade.oneWETHProfit > 0);
+  return bestTrades;
 }
 

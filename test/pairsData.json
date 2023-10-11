@@ -1,0 +1,172 @@
+[
+    {
+      "index": 0,
+      "originalLp": {
+        "_marketAddress": "0x3Aa370AacF4CB08C7E1E7AA8E8FF9418D73C7e0F",
+        "_tokens": [
+          "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+          "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
+        ],
+        "_protocol": "",
+        "_tokenBalances": {
+          "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48": {
+            "type": "BigNumber",
+            "_hex": "0x3c336fa911"
+          },
+          "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2": {
+            "type": "BigNumber",
+            "_hex": "0x08cb87ba43de6db176"
+          }
+        }
+      },
+      "address": "0x3Aa370AacF4CB08C7E1E7AA8E8FF9418D73C7e0F",
+      "token0": {
+        "address": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+        "symbol": "USDC",
+        "decimals": 6
+      },
+      "token1": {
+        "address": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+        "symbol": "WETH",
+        "decimals": 18
+      },
+      "reserve0": 258560993553,
+      "reserve1": 162239848101889000000
+    },
+    {
+      "index": 1,
+      "originalLp": {
+        "_marketAddress": "0x3926a168C11a816e10c13977f75F488BffFE88E4",
+        "_tokens": [
+          "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+          "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
+        ],
+        "_protocol": "",
+        "_tokenBalances": {
+          "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48": {
+            "type": "BigNumber",
+            "_hex": "0xeb6b3a32"
+          },
+          "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2": {
+            "type": "BigNumber",
+            "_hex": "0x2238734869359150"
+          }
+        }
+      },
+      "address": "0x3926a168C11a816e10c13977f75F488BffFE88E4",
+      "token0": {
+        "address": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+        "symbol": "USDC",
+        "decimals": 6
+      },
+      "token1": {
+        "address": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+        "symbol": "WETH",
+        "decimals": 18
+      },
+      "reserve0": 3949673010,
+      "reserve1": 2465847550825304600
+    },
+    {
+      "index": 2,
+      "originalLp": {
+        "_marketAddress": "0x397FF1542f962076d0BFE58eA045FfA2d347ACa0",
+        "_tokens": [
+          "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+          "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
+        ],
+        "_protocol": "",
+        "_tokenBalances": {
+          "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48": {
+            "type": "BigNumber",
+            "_hex": "0x05b34b40af93"
+          },
+          "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2": {
+            "type": "BigNumber",
+            "_hex": "0xd54ac536f343fc38e4"
+          }
+        }
+      },
+      "address": "0x397FF1542f962076d0BFE58eA045FfA2d347ACa0",
+      "token0": {
+        "address": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+        "symbol": "USDC",
+        "decimals": 6
+      },
+      "token1": {
+        "address": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+        "symbol": "WETH",
+        "decimals": 18
+      },
+      "reserve0": 6267619815315,
+      "reserve1": 3.934544260647799e+21
+    },
+    {
+      "index": 3,
+      "originalLp": {
+        "_marketAddress": "0xB4e16d0168e52d35CaCD2c6185b44281Ec28C9Dc",
+        "_tokens": [
+          "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+          "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
+        ],
+        "_protocol": "",
+        "_tokenBalances": {
+          "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48": {
+            "type": "BigNumber",
+            "_hex": "0x193b6486df22"
+          },
+          "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2": {
+            "type": "BigNumber",
+            "_hex": "0x03af9c1585b1b71f38d9"
+          }
+        }
+      },
+      "address": "0xB4e16d0168e52d35CaCD2c6185b44281Ec28C9Dc",
+      "token0": {
+        "address": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+        "symbol": "USDC",
+        "decimals": 6
+      },
+      "token1": {
+        "address": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+        "symbol": "WETH",
+        "decimals": 18
+      },
+      "reserve0": 27742880325410,
+      "reserve1": 1.7406526704150863e+22
+    },
+    {
+      "index": 4,
+      "originalLp": {
+        "_marketAddress": "0x74C99F3f5331676f6AEc2756e1F39b4FC029a83E",
+        "_tokens": [
+          "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+          "0xdAC17F958D2ee523a2206206994597C13D831ec7"
+        ],
+        "_protocol": "",
+        "_tokenBalances": {
+          "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2": {
+            "type": "BigNumber",
+            "_hex": "0x0316f14f04a70a8448"
+          },
+          "0xdAC17F958D2ee523a2206206994597C13D831ec7": {
+            "type": "BigNumber",
+            "_hex": "0x151df3bbc8"
+          }
+        }
+      },
+      "address": "0x74C99F3f5331676f6AEc2756e1F39b4FC029a83E",
+      "token0": {
+        "address": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+        "symbol": "WETH",
+        "decimals": 18
+      },
+      "token1": {
+        "address": "0xdac17f958d2ee523a2206206994597c13d831ec7",
+        "symbol": "USDT",
+        "decimals": 6
+      },
+      "reserve0": 56993421640751284000,
+      "reserve1": 90696825800
+    }
+  ]

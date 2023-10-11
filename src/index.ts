@@ -1,43 +1,64 @@
 // import { FlashbotsBundleProvider } from "@flashbots/ethers-provider-bundle";
 import { Contract, providers, utils, Wallet, BigNumber } from "ethers";
-import { BUNDLE_EXECUTOR_ABI, UNISWAP_ROUTER_ABI, UNISWAP_PAIR_ABI, ERC20_ABI } from "./abi";
+import {
+  BUNDLE_EXECUTOR_ABI,
+  UNISWAP_ROUTER_ABI,
+  UNISWAP_PAIR_ABI,
+  ERC20_ABI,
+} from "./abi";
 import { UniswappyV2EthPair, GroupedMarkets } from "./UniswappyV2EthPair";
 import { FACTORY_ADDRESSES, WETH_ADDRESS, USDT_ADDRESS } from "./addresses";
 import { MIN_PROFIT_USDT, IS_TEST_MODE, IS_BIGNUMBER_MODE } from "./config";
 // import { Arbitrage } from "./Arbitrage";
-import { get } from "https"
+import { get } from "https";
 import { getDefaultRelaySigningKey } from "./utils";
-import stablecoinsList from './data/stablecoins.json';
-import { wethData, stablecoinAddressesData, StablecoinAddresses } from './data/stablecoinsdata';
-import { buildStablecoinDataFile } from './buildStablesFile';
-import { performance } from 'perf_hooks';
-import { ChainId, Fetcher, WETH, Route, Trade, TokenAmount, TradeType, Percent } from '@uniswap/sdk';
+import stablecoinsList from "./data/stablecoins.json";
+import {
+  wethData,
+  stablecoinAddressesData,
+  StablecoinAddresses,
+} from "./data/stablecoinsdata";
+import { buildStablecoinDataFile } from "./buildStablesFile";
+import { performance } from "perf_hooks";
+import {
+  ChainId,
+  Fetcher,
+  WETH,
+  Route,
+  Trade,
+  TokenAmount,
+  TradeType,
+  Percent,
+} from "@uniswap/sdk";
 import { exit } from "process";
 
-const { convertLiquidityPool, getArbPathsDecimals } = require('./FindArb.js');
-const { getArbPathsBigNumbers } = require('./FindArbBigNumbers.js');
-const getArbPaths = IS_BIGNUMBER_MODE ? getArbPathsBigNumbers : getArbPathsDecimals;
+const { convertLiquidityPool, getArbPathsDecimals } = require("./FindArb.js");
+const { getArbPathsBigNumbers } = require("./FindArbBigNumbers.js");
+const getArbPaths = IS_BIGNUMBER_MODE
+  ? getArbPathsBigNumbers
+  : getArbPathsDecimals;
 
 require("dotenv").config();
-const fs = require('fs');
+const fs = require("fs");
 const hre = require("hardhat");
-const pairs = require('./data/pairs.json');
+const pairs = require("./data/pairs.json");
 const chainId = ChainId.MAINNET;
-const ALCHEMY_RPC_URL: string = process.env.ALCHEMY_RPC_URL_MAINNET || '';
-const UNISWAP_ROUTER_ADDRESS: string = process.env.UNISWAP_ROUTER_ADDRESS || '';
+const ALCHEMY_RPC_URL: string =
+  `https://eth-mainnet.alchemyapi.io/v2/${process.env.ALCHEMY_API_KEY}` || "";
+const UNISWAP_ROUTER_ADDRESS: string = process.env.UNISWAP_ROUTER_ADDRESS || "";
 const ETHEREUM_RPC_URL = process.env.ETHEREUM_RPC_URL || ALCHEMY_RPC_URL;
 const PRIVATE_KEY = process.env.PRIVATE_KEY || "";
 const BUNDLE_EXECUTOR_ADDRESS = process.env.BUNDLE_EXECUTOR_ADDRESS || "";
 const allTokens = {
   ...wethData,
-  ...stablecoinAddressesData
+  ...stablecoinAddressesData,
 };
-const consoleColourReset = '\x1b[0m';
-const consoleColourRed = '\x1b[31m';
-const consoleColourGreen = '\x1b[32m';
-const consoleColourYellow = '\x1b[33m';
+const consoleColourReset = "\x1b[0m";
+const consoleColourRed = "\x1b[31m";
+const consoleColourGreen = "\x1b[32m";
+const consoleColourYellow = "\x1b[33m";
 
-const uniswapRouterAddress: string = process.env.UNISWAP_ROUTER_ADDRESS || '';
+const uniswapRouterAddress: string = process.env.UNISWAP_ROUTER_ADDRESS || "";
 
 // console.log(`*** ${uniswapRouterAddress} ***`);
 
@@ -66,9 +87,15 @@ if (IS_TEST_MODE) {
   provider = new providers.StaticJsonRpcProvider(ETHEREUM_RPC_URL);
 }
 // const provider = new providers.StaticJsonRpcProvider(ETHEREUM_RPC_URL);
-const HEALTHCHECK_URL = process.env.HEALTHCHECK_URL || ""
-const stablecoinAddresses = stablecoinsList.map(stablecoinAddress => stablecoinAddress.address);
-const uniswapRouter = new Contract(UNISWAP_ROUTER_ADDRESS, UNISWAP_ROUTER_ABI, provider);
+const HEALTHCHECK_URL = process.env.HEALTHCHECK_URL || "";
+const stablecoinAddresses = stablecoinsList.map(
+  (stablecoinAddress) => stablecoinAddress.address
+);
+const uniswapRouter = new Contract(
+  UNISWAP_ROUTER_ADDRESS,
+  UNISWAP_ROUTER_ABI,
+  provider
+);
 
 let marketCheckIteration = 1;
 
@@ -77,34 +104,68 @@ let marketCheckIteration = 1;
 
 async function printChainId() {
   // Compare the chain ID to known testnet IDs
-  const currentChainId = await provider.getNetwork().then((network) => network.chainId);
+  const currentChainId = await provider
+    .getNetwork()
+    .then((network) => network.chainId);
   const chainIdStr = `chainId(${currentChainId.toString()})`;
 
-  if (!IS_TEST_MODE && currentChainId.toString() === '1') {
-    console.log(consoleColourRed, `\n[ Running on Mainnet ${chainIdStr} ]`, consoleColourReset);
-  } else if (IS_TEST_MODE && currentChainId.toString() === '1') {
-    console.log(consoleColourGreen, `\n[ Running local dev environment on Mainnet ${chainIdStr} ]`, consoleColourReset);
-  } else if (IS_TEST_MODE && currentChainId.toString() === '31337') {
-    console.log(consoleColourGreen, `\n[ Running local dev environment on ${chainIdStr} ]`, consoleColourReset);
-  } else if (currentChainId.toString() === '3') {
-    console.log(consoleColourYellow, `\n[ Running on Ropsten Testnet ${chainIdStr} ]`, consoleColourReset);
-  } else if (currentChainId.toString() === '4') {
-    console.log(consoleColourYellow, `\n[ Running on Rinkeby Testnet ${chainIdStr} ]`, consoleColourReset);
-  } else if (currentChainId.toString() === '42') {
-    console.log(consoleColourYellow, `\n[ Running on Kovan Testnet ${chainIdStr} ]`, consoleColourReset);
-  } else if (currentChainId.toString() === '5') {
-    console.log(consoleColourYellow, `\n[ Running on Goerli Testnet ${chainIdStr} ]`, consoleColourReset);
+  if (!IS_TEST_MODE && currentChainId.toString() === "1") {
+    console.log(
+      consoleColourRed,
+      `\n[ Running on Mainnet ${chainIdStr} ]`,
+      consoleColourReset
+    );
+  } else if (IS_TEST_MODE && currentChainId.toString() === "1") {
+    console.log(
+      consoleColourGreen,
+      `\n[ Running local dev environment on Mainnet ${chainIdStr} ]`,
+      consoleColourReset
+    );
+  } else if (IS_TEST_MODE && currentChainId.toString() === "31337") {
+    console.log(
+      consoleColourGreen,
+      `\n[ Running local dev environment on ${chainIdStr} ]`,
+      consoleColourReset
+    );
+  } else if (currentChainId.toString() === "3") {
+    console.log(
+      consoleColourYellow,
+      `\n[ Running on Ropsten Testnet ${chainIdStr} ]`,
+      consoleColourReset
+    );
+  } else if (currentChainId.toString() === "4") {
+    console.log(
+      consoleColourYellow,
+      `\n[ Running on Rinkeby Testnet ${chainIdStr} ]`,
+      consoleColourReset
+    );
+  } else if (currentChainId.toString() === "42") {
+    console.log(
+      consoleColourYellow,
+      `\n[ Running on Kovan Testnet ${chainIdStr} ]`,
+      consoleColourReset
+    );
+  } else if (currentChainId.toString() === "5") {
+    console.log(
+      consoleColourYellow,
+      `\n[ Running on Goerli Testnet ${chainIdStr} ]`,
+      consoleColourReset
+    );
   } else {
-    console.log(consoleColourYellow, `\n[ Running on an unknown network with ${chainIdStr} ]`, consoleColourReset);
+    console.log(
+      consoleColourYellow,
+      `\n[ Running on an unknown network with ${chainIdStr} ]`,
+      consoleColourReset
+    );
   }
-  console.log('\n');
+  console.log("\n");
 }
 
 function healthcheck() {
   if (HEALTHCHECK_URL === "") {
-    return
+    return;
   }
-  get(HEALTHCHECK_URL).on('error', console.error);
+  get(HEALTHCHECK_URL).on("error", console.error);
 }
 
 async function saveTradesWithBigNumbers(bestTrades: any) {
@@ -116,12 +177,12 @@ async function saveTradesWithBigNumbers(bestTrades: any) {
     }
     return value; // For other types, return as is
   };
-  
+
   // Convert the array of objects to a JSON string with custom replacer
   const jsonString = JSON.stringify(bestTrades, bigNumberReplacer, 2);
-  
+
   // Write the JSON string to the file
-  fs.writeFileSync('last-best-trades.json', jsonString);
+  fs.writeFileSync("last-best-trades.json", jsonString);
 }
 
 // build stablecoin data file
@@ -140,12 +201,23 @@ async function getGasPrice() {
 }
 
 const getUsdtToWethPrice = async (usdtAmount: number) => {
-  const usdt = new Contract(USDT_ADDRESS, ['function decimals() view returns (uint8)'], provider);
+  const usdt = new Contract(
+    USDT_ADDRESS,
+    ["function decimals() view returns (uint8)"],
+    provider
+  );
   const usdtDecimals = await usdt.decimals();
-  const weth = new Contract(WETH_ADDRESS, ['function decimals() view returns (uint8)'], provider);
+  const weth = new Contract(
+    WETH_ADDRESS,
+    ["function decimals() view returns (uint8)"],
+    provider
+  );
   const wethDecimals = await weth.decimals();
   const amountIn = utils.parseUnits(usdtAmount.toString(), usdtDecimals);
-  const amounts = await uniswapRouter.getAmountsOut(amountIn, [USDT_ADDRESS, WETH_ADDRESS]);
+  const amounts = await uniswapRouter.getAmountsOut(amountIn, [
+    USDT_ADDRESS,
+    WETH_ADDRESS,
+  ]);
   const amountOut = amounts[1];
   const formattedAmountOut = utils.formatUnits(amountOut, wethDecimals);
 
@@ -156,12 +228,12 @@ printChainId();
 
 if (IS_TEST_MODE) {
   // Read the contents of the file
-  const rawData = fs.readFileSync('last-best-trades.json', 'utf-8');
+  const rawData = fs.readFileSync("last-best-trades.json", "utf-8");
   // Parse the JSON data into an array object
   const bestTrades = JSON.parse(rawData);
   bestTrades.map((trade: any) => console.table(trade.route));
 
-  console.log('\nexiting testnet ..\n');
+  console.log("\nexiting testnet ..\n");
   exit();
 }
 
@@ -173,46 +245,50 @@ async function main() {
   //   arbitrageSigningWallet,
   //   flashbotsProvider,
   //   new Contract(BUNDLE_EXECUTOR_ADDRESS, BUNDLE_EXECUTOR_ABI, provider) )
-  console.log('\nfinding your paths ...\n');
+  console.log("\nfinding your paths ...\n");
 
   let markets: GroupedMarkets;
   const minProfitWeth = await getUsdtToWethPrice(MIN_PROFIT_USDT);
   const gasPrice = await getGasPrice();
-  const numberMode = IS_BIGNUMBER_MODE ? 'BIG NUMBERS' : 'DECIMALS';
+  const numberMode = IS_BIGNUMBER_MODE ? "BIG NUMBERS" : "DECIMALS";
 
   console.log(`${MIN_PROFIT_USDT} USDT = ${minProfitWeth} WETH`);
   console.log(`Gas Price: ${utils.formatEther(gasPrice)} ETH`);
 
-  
-  console.log('\x1b[38;5;207m%s\x1b[0m', '\n*************************');
-  console.log('\x1b[38;5;207m%s\x1b[0m', `       ${numberMode}       `);
-  console.log('\x1b[38;5;207m%s\x1b[0m', '*************************\n');
+  console.log("\x1b[38;5;207m%s\x1b[0m", "\n*************************");
+  console.log("\x1b[38;5;207m%s\x1b[0m", `       ${numberMode}       `);
+  console.log("\x1b[38;5;207m%s\x1b[0m", "*************************\n");
 
   try {
-    markets = await UniswappyV2EthPair.getUniswapMarketsByToken(provider, FACTORY_ADDRESSES);
+    markets = await UniswappyV2EthPair.getUniswapMarketsByToken(
+      provider,
+      FACTORY_ADDRESSES
+    );
   } catch (error) {
     console.error(`\nError retrieving Uniswap markets...\n`);
   }
 
-  provider.on('block', async (blockNumber) => {
+  provider.on("block", async (blockNumber) => {
     try {
       await UniswappyV2EthPair.updateReserves(provider, markets.allMarketPairs);
       console.log(`\n************************************ ...`);
-      console.log(`*** checking market iteration #${marketCheckIteration++} *** ...`);
+      console.log(
+        `*** checking market iteration #${marketCheckIteration++} *** ...`
+      );
       console.log(`************************************ ...\n`);
 
       // define vars for finding arbitrage pathways
       const wethDataObj = Object.values(wethData)[0];
       const wethAddress = wethDataObj.address.toLowerCase();
       let tokenIn = {
-        'address': wethAddress,
-        'symbol': wethDataObj.symbol,
-        'decimals': wethDataObj.decimals,
+        address: wethAddress,
+        symbol: wethDataObj.symbol,
+        decimals: wethDataObj.decimals,
       };
       let tokenOut = {
-        'address': wethAddress,
-        'symbol': wethDataObj.symbol,
-        'decimals': wethDataObj.decimals,
+        address: wethAddress,
+        symbol: wethDataObj.symbol,
+        decimals: wethDataObj.decimals,
       };
       const maxHops = 7;
 
@@ -222,8 +298,8 @@ async function main() {
 
       // get list of all stable coins
       // filter pairs for only stable coins using list for new list of stablecoin pairs
-      const filteredMarketPairs = markets.allMarketPairs.filter(pool => {
-        const poolTokens = pool["_tokens"].map(token => token.toLowerCase());
+      const filteredMarketPairs = markets.allMarketPairs.filter((pool) => {
+        const poolTokens = pool["_tokens"].map((token) => token.toLowerCase());
 
         if (poolTokens[0].toLowerCase() === wethAddress) {
           return !!stablecoinAddressesData[poolTokens[1].toLowerCase()];
@@ -233,19 +309,39 @@ async function main() {
           return false;
         }
       });
-      
+
       // in FindArb convert each pair object to the one expected by FindArb
       console.log(`block number: ${blockNumber}\n`);
-      console.log(`filteredMarketPairs length: ${filteredMarketPairs.length}\n`);
+      console.log(
+        `filteredMarketPairs length: ${filteredMarketPairs.length}\n`
+      );
 
-      const convertedFilteredMarketPairs = filteredMarketPairs.map(convertLiquidityPool);
+      const convertedFilteredMarketPairs =
+        filteredMarketPairs.map(convertLiquidityPool);
 
-      console.log(`convertedFilteredMarketPairs length: ${convertedFilteredMarketPairs.length}\n`);
+      console.log(
+        `convertedFilteredMarketPairs length: ${convertedFilteredMarketPairs.length}\n`
+      );
       // console.log('*** convertedFilteredMarketPairs ***');
-      // console.log((convertedFilteredMarketPairs[0] as { originalLp: any })['originalLp']);
-      
+      console.log(
+        (convertedFilteredMarketPairs[0] as { originalLp: any })["originalLp"]
+      );
+
       let startFindArb = performance.now();
-      const bestTrades = await getArbPaths(convertedFilteredMarketPairs, tokenIn, tokenOut, maxHops, [], [tokenIn], [], 5, MIN_PROFIT_USDT, minProfitWeth, gasPrice, provider);
+      const bestTrades = await getArbPaths(
+        convertedFilteredMarketPairs,
+        tokenIn,
+        tokenOut,
+        maxHops,
+        [],
+        [tokenIn],
+        [],
+        5,
+        MIN_PROFIT_USDT,
+        minProfitWeth,
+        gasPrice,
+        provider
+      );
       // let bestTrades = await FindArbRoutes(convertedFilteredMarketPairs, tokenIn, tokenOut, maxHops, [], [tokenIn], [], 5, MIN_PROFIT_USDT, minProfitWeth);
       // let bestTrades = await FindArbRoutes(pairs, tokenIn, tokenOut, maxHops, [], [tokenIn], [], 5);
       let finishFindArb = performance.now();
@@ -253,29 +349,47 @@ async function main() {
       if (totalTimeFindArb >= 60) {
         const minutes = Math.floor(totalTimeFindArb / 60);
         const seconds = (totalTimeFindArb % 60).toFixed(2);
-        console.log(`\nThe asynchronous call took ${minutes} minute${minutes > 1 ? 's' : ''} and ${seconds} seconds to complete.\n`);
+        console.log(
+          `\nThe asynchronous call took ${minutes} minute${
+            minutes > 1 ? "s" : ""
+          } and ${seconds} seconds to complete.\n`
+        );
       } else {
-        console.log(`\nThe asynchronous call took ${totalTimeFindArb.toFixed(2)} seconds to complete.\n`);
+        console.log(
+          `\nThe asynchronous call took ${totalTimeFindArb.toFixed(
+            2
+          )} seconds to complete.\n`
+        );
       }
       if (IS_BIGNUMBER_MODE) {
         saveTradesWithBigNumbers(bestTrades);
       }
 
-      console.log('\x1b[32m%s\x1b[0m', '\n*************************');
-      console.log('\x1b[32m%s\x1b[0m', '**       SUCCESS       **');
-      console.log('\x1b[32m%s\x1b[0m', '*************************\n');
+      console.log("\x1b[32m%s\x1b[0m", "\n*************************");
+      console.log("\x1b[32m%s\x1b[0m", "**       SUCCESS       **");
+      console.log("\x1b[32m%s\x1b[0m", "*************************\n");
 
-      console.log('bestTrades: ');
+      console.log("bestTrades: ");
       console.log(bestTrades);
-      bestTrades.map((trade: any) => console.table(trade.route));
+
+      console.log("\x1b[32m%s\x1b[0m", "\n*************************");
+      console.log("\x1b[32m%s\x1b[0m", "**       ROUTES        **");
+      console.log("\x1b[32m%s\x1b[0m", "*************************\n");
+
+      bestTrades.map((trade: any, index: number) => {
+        console.log(`\n\n### TRADE ${index} ###\n`);
+        trade.route.map((route: any) => {
+          console.log(route.originalLp);
+        });
+      });
       // DEBUG: PRIMARY CONSOLE DUMP
       // bestTrades.map((trade: any) => console.table(trade.calculatedRoutes));
-    } catch (error) { 
-      console.log('\x1b[31m%s\x1b[0m', '\n*************************');
-      console.log('\x1b[31m%s\x1b[0m', '**        ERROR        **');
-      console.log('\x1b[31m%s\x1b[0m', '*************************\n');
+    } catch (error) {
+      console.log("\x1b[31m%s\x1b[0m", "\n*************************");
+      console.log("\x1b[31m%s\x1b[0m", "**        ERROR        **");
+      console.log("\x1b[31m%s\x1b[0m", "*************************\n");
       console.error(`\nError during updateReserves ...\n`);
-      console.error(`error: ${(error as any)}\n`);
+      console.error(`error: ${error as any}\n`);
       console.error(`trying again ...\n`);
     }
 
@@ -288,7 +402,7 @@ async function main() {
     // }
     // bestCrossedMarkets.forEach(Arbitrage.printCrossedMarket);
     // arbitrage.takeCrossedMarkets(bestCrossedMarkets, blockNumber, MINER_REWARD_PERCENTAGE).then(healthcheck).catch(console.error)
-  })
+  });
 }
 
 main();
