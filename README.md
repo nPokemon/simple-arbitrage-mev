@@ -28,24 +28,51 @@ $ PRIVATE_KEY=__PRIVATE_KEY_FROM_ABOVE__ \
       npm run start
 ```
 
-My Usage
+Usage
 ======================
 
 
-- this step on a new install
+### *this step on a new install*
 ```
 npm install
 npm update
 ```
 
-then:
+## Run on Development
+```
+npm run dev
+```
 
+## Run on Production
 ```
 npm run build
 ```
 
-then:
-
+### *then*
 ```
 node build/index.js
+```
+
+## Run on Testnet
+### *in another terminal:*
+```
+npx hardhat node
+```
+### *then edit src/config.js*
+```
+export const IS_TEST_MODE = true;
+```
+
+## Run in BigNumber Mode
+
+* edit src/config.js
+### *edit src/config.js*
+```
+export const IS_BIGNUMBER_MODE = true;
+```
+
+## Run in Decimal Mode
+### *edit src/config.js*
+```
+export const IS_BIGNUMBER_MODE = false;
 ```
